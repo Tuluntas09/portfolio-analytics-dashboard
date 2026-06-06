@@ -6,3 +6,4 @@ playwright-report/
 *.local
 .env
 .env.*
+!.env.example
