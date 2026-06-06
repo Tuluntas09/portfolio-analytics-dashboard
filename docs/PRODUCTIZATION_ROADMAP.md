@@ -669,7 +669,26 @@ Step 10: Remove Babel Standalone and React UMD CDN from index  ✓ Phase 6i
 
 **README:** CI badge added pointing to `Tuluntas09/portfolio-analytics-dashboard` workflow. Badge activates once the repository is pushed to GitHub.
 
-#### 7c — Build output validation
+#### 7c — GitHub visual presentation (screenshots) ✓ *Completed 2026-06-07*
+
+**Goal:** Add professional screenshot assets to the repository for GitHub presentation.
+
+**What was added:**
+- `scripts/capture-screenshots.mjs` — self-contained Playwright headless capture script. Starts the Vite dev server automatically if not already running on port 8502, sets `qpa-language=en` + `qpa-theme=dark` via `addInitScript` (mirrors E2E test setup), waits for `.kpi-strip` to render, pauses 1.5 s for SVG charts to complete, then captures two screenshots.
+- `docs/assets/dashboard-overview.png` — Overview tab, dark theme, 1440 × 900, mock data, 175 kB.
+- `docs/assets/dashboard-risk.png` — Risk Analytics tab, dark theme, 1440 × 900, mock data, 149 kB.
+- `package.json`: `"capture:screenshots": "node scripts/capture-screenshots.mjs"` added.
+- `README.md`: Preview section added (two-column table) between Overview and Features.
+
+**Constraints preserved:**
+- No FINNHUB_API_KEY visible. App runs in mock/offline mode in screenshots.
+- No UI changes made for screenshot purposes.
+- `capture:screenshots` is not part of CI.
+- No new runtime dependencies.
+
+**Acceptance:** Two screenshots exist in `docs/assets/`. README renders a side-by-side preview table. Build, smoke, and E2E tests unaffected. ✓
+
+#### 7d — Build output validation
 
 Vite build currently works but the output is not validated. Add a build smoke test:
 verify that `dist/index.html` references the compiled assets and that the legacy

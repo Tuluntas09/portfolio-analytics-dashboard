@@ -23,7 +23,8 @@
     "test:app": "node scripts/app-check.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "capture:screenshots": "node scripts/capture-screenshots.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

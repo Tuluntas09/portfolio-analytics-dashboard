@@ -26,6 +26,16 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 
 ---
 
+## Preview
+
+| Overview | Risk Analytics |
+|---|---|
+| ![Overview tab — portfolio summary, growth chart, allocation donut, holdings detail](docs/assets/dashboard-overview.png) | ![Risk Analytics tab — volatility metrics, correlation heatmap, risk contribution](docs/assets/dashboard-risk.png) |
+
+*Dark theme · mock data · 1440 × 900*
+
+---
+
 ## Features
 
 | Feature | Description |
@@ -302,7 +312,7 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | Data-quality transparency panel |
 | ✅ Done | GitHub Actions CI (build + all Node.js suites + E2E) |
 | 🔲 Planned | Deployment guide (Vercel / Netlify static + proxy notes) |
-| 🔲 Planned | Screenshots and demo GIF |
+| ✅ Done | Screenshots (Overview + Risk Analytics tabs) |
 | 🔲 Planned | CSV portfolio import/export |
 | 🔲 Planned | Saved portfolios (localStorage) |
 | 🔲 Planned | User-selectable benchmark |
