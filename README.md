@@ -12,8 +12,6 @@ Vite React · Finnhub/Yahoo Finance proxy · Monte Carlo simulation · portfolio
 [![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)](.)
 
-> CI badge activates once the repository is pushed to `Tuluntas09/portfolio-analytics-dashboard` on GitHub.
-
 </div>
 
 ---
@@ -59,7 +57,7 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **History Fallback** | Yahoo Finance chart API (`/v8/finance/chart`) |
 | **Mock Data** | Deterministic GBM price model with seeded Mulberry32 RNG |
 | **Testing** | 14 Node.js script test suites + Playwright Chromium E2E |
-| **Build** | Vite production build — 318 kB JS / 97 kB gzip |
+| **Build** | Vite production build — 268 kB JS / 83 kB gzip |
 | **Security** | Finnhub API key stays server-side; never bundled by Vite or sent to the browser |
 
 ---
@@ -189,7 +187,7 @@ npm run test:e2e:headed   # same tests with visible browser window
 |---|---|
 | Node.js test suites | 14 / 14 pass |
 | Playwright E2E | 19 / 19 pass |
-| Production build | 318 kB JS · 97 kB gzip · 30 modules · 0 warnings |
+| Production build | 268 kB JS · 83 kB gzip · 28 modules · 0 warnings |
 
 ---
 
@@ -302,7 +300,7 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | Finnhub 429 guard with `Retry-After` parsing and Yahoo fallback |
 | ✅ Done | Playwright E2E foundation (19 tests) |
 | ✅ Done | Data-quality transparency panel |
-| 🔲 Planned | GitHub Actions CI (build + all Node.js suites + E2E) |
+| ✅ Done | GitHub Actions CI (build + all Node.js suites + E2E) |
 | 🔲 Planned | Deployment guide (Vercel / Netlify static + proxy notes) |
 | 🔲 Planned | Screenshots and demo GIF |
 | 🔲 Planned | CSV portfolio import/export |
