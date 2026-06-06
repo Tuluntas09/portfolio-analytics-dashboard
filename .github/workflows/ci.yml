@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Validate build output
+        run: npm run test:build
+
       - name: Node.js validation tests
         run: |
           npm run test:smoke

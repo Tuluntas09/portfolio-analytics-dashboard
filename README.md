@@ -173,6 +173,10 @@ Get a free key at [finnhub.io](https://finnhub.io).
 ## Test Suite
 
 ```bash
+# Build and build output validation (run together)
+npm run build             # Vite production bundle → dist/
+npm run test:build        # validate dist/ structure, forbidden refs, bundle size ceilings
+
 # Node.js source-analysis and integration tests
 npm run test:smoke        # index.html entry point, adapter exports, tab order
 npm run test:metrics      # financial formula correctness (Sharpe, CVaR, beta, rf propagation)
@@ -195,9 +199,10 @@ npm run test:e2e:headed   # same tests with visible browser window
 
 | Metric | Result |
 |---|---|
+| Build validation checks | 15 / 15 pass |
 | Node.js test suites | 14 / 14 pass |
 | Playwright E2E | 19 / 19 pass |
-| Production build | 268 kB JS · 83 kB gzip · 28 modules · 0 warnings |
+| Production build | 261 kB JS · 81 kB gzip · 28 modules · 0 warnings |
 
 ---
 

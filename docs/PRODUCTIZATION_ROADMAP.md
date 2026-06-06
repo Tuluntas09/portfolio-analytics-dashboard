@@ -688,13 +688,22 @@ Step 10: Remove Babel Standalone and React UMD CDN from index  ✓ Phase 6i
 
 **Acceptance:** Two screenshots exist in `docs/assets/`. README renders a side-by-side preview table. Build, smoke, and E2E tests unaffected. ✓
 
-#### 7d — Build output validation
+#### 7d — Build output validation ✓ *Completed 2026-06-07*
 
-Vite build currently works but the output is not validated. Add a build smoke test:
-verify that `dist/index.html` references the compiled assets and that the legacy
-JSX files are not present in `dist/` (post-Phase 6 only).
+**Goal:** Validate that the Vite production build in `dist/` is structurally correct after every build.
 
-#### 7d — Deployment documentation
+**What was added:**
+- `scripts/build-check.mjs` — 15-check validation script (Node.js built-ins only: `fs`, `path`, `zlib`). Checks: `dist/` and `dist/index.html` exist; compiled JS asset referenced under `/assets/`; no Babel Standalone, no React/ReactDOM UMD CDN, no `public/legacy/*.jsx` references, no `type="text/babel"` in `index.html`; `dist/assets/` contains at least one `.js` file; no `.jsx` source files in `dist/`; `dist/legacy/` does not exist; raw JS bundle ≤ 400 kB; gzip JS bundle ≤ 150 kB.
+- `vite.config.js`: `build.copyPublicDir: false` added. Prevents `public/legacy/*.jsx` from being copied to `dist/` during build. Dev mode (`npm run dev`) is unaffected — Vite still serves `publicDir` files in development.
+- `package.json`: `"test:build": "node scripts/build-check.mjs"` added.
+- `.github/workflows/ci.yml`: `npm run test:build` step added immediately after the build step.
+- `README.md`: Test Suite section updated — `test:build` documented, build validation row added to results table, build stats updated.
+
+**Current build result:** 261 kB raw / 81 kB gzip (well within 400 / 150 kB ceilings).
+
+**Acceptance:** `npm run test:build` 15/15 pass. All existing tests unaffected. Build, smoke, metrics, app, E2E all pass. ✓
+
+#### 7e — Deployment documentation
 
 Add `docs/DEPLOYMENT.md` covering:
 - Local development (`npm run dev` + `npm run api`)

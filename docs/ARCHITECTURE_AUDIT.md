@@ -83,12 +83,13 @@ Breaking this order crashes the app silently at runtime.
 
 **What it was:** `@babel/standalone` (3 MB compressed) transpiled all JSX at page load time in the user's browser.  
 **Consequence:** 200–600 ms parse+transpile cost on every cold load; no caching benefit between files; error messages pointed to generated output, not source lines.  
-**Resolution (Phase 6i):** Babel Standalone and React UMD CDN scripts removed from `index.html`. `src/app.jsx` is now the module entry; Vite compiles all JSX at build time. Production build: 318 kB JS / 97 kB gzip, 30 modules, ~700 ms build time.
+**Resolution (Phase 6i):** Babel Standalone and React UMD CDN scripts removed from `index.html`. `src/app.jsx` is now the module entry; Vite compiles all JSX at build time. Production build: 261 kB JS / 81 kB gzip, 28 modules, ~450–700 ms build time (React 18.3.1).
 
 ### Risk 6 — No CI or reproducible build environment ✓ *Resolved — Phase 7b (2026-06-07)*
 
-**What it was:** All tests ran locally only. No guarantee the build or tests would pass in a clean environment or on a fresh clone.  
-**Resolution:** `.github/workflows/ci.yml` added. Runs on every push and pull request: `npm ci` → Playwright Chromium install → `npm run build` → 13 Node.js validation suites → `npm run test:e2e` (19 Playwright tests). Ubuntu latest, Node.js 20. No `FINNHUB_API_KEY` required — `test:api` handles the missing-key branch explicitly; all other tests use mock data or source-text analysis. Playwright test-results artifact uploaded on failure (7-day retention).
+**What it was:** All tests ran locally only. No guarantee the build or tests would pass in a clean environment or on a fresh clone. No validation that the production build output was structurally correct.  
+**Resolution (Phase 7b):** `.github/workflows/ci.yml` added. Runs on every push and pull request: `npm ci` → Playwright Chromium install → `npm run build` → `npm run test:build` → 14 Node.js validation suites → `npm run test:e2e` (19 Playwright tests). Ubuntu latest, Node.js 20. No `FINNHUB_API_KEY` required. Playwright test-results artifact uploaded on failure (7-day retention).  
+**Resolution (Phase 7d):** `scripts/build-check.mjs` added (15 checks, Node.js built-ins only). Verifies `dist/` structure, confirms absence of Babel/UMD/legacy references in `dist/index.html`, asserts no `.jsx` files or `dist/legacy/` directory in build output, enforces raw ≤ 400 kB and gzip ≤ 150 kB bundle ceilings. `vite.config.js` sets `build.copyPublicDir: false` to prevent `public/legacy/*.jsx` from appearing in `dist/`. `npm run test:build` runs in CI immediately after `npm run build`.
 
 ### Risk 2 — Global window coupling *(Partially resolved — Phase 6b/6c — 2026-06-06)*
 

@@ -21,6 +21,7 @@
     "test:overview": "node scripts/overview-check.mjs",
     "test:analysis": "node scripts/analysis-check.mjs",
     "test:app": "node scripts/app-check.mjs",
+    "test:build": "node scripts/build-check.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",

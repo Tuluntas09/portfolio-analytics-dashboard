@@ -19,4 +19,10 @@ export default defineConfig({
     jsxFactory: "React.createElement",
     jsxFragment: "React.Fragment",
   },
+  build: {
+    // public/legacy/*.jsx are preserved reference files, not production assets.
+    // Exclude them from dist/ so the build output contains only compiled code.
+    // Dev mode (npm run dev) is unaffected — publicDir files are still served.
+    copyPublicDir: false,
+  },
 });
