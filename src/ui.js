@@ -1,0 +1,139 @@
+/* ============================================================
+   src/ui.js — Vite-native ES module for pure-JS UI utilities.
+   No JSX, no React. Importable in both browser and Node.js.
+
+   React components (Card, Metric, Pill, Table, Alert, ModuleIntro,
+   InsightGrid, InsightCard, Segmented, Spark) live in src/ui.jsx,
+   which re-exports everything here and adds the JSX components.
+
+   public/legacy/ui.jsx is the unchanged browser-Babel shim that
+   assigns every symbol to window.* for legacy script consumers
+   (charts.jsx, sidebar.jsx, views-*.jsx, app.jsx).
+
+   Migration phase: 6c (adapter-based first step for UI layer).
+   ============================================================ */
+
+// ---- formatters ----
+export const fmtPct = (v, d = 1) => (v >= 0 ? "" : "−") + Math.abs(v * 100).toFixed(d) + "%";
+export const fmtPctSigned = (v, d = 1) => (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) + "%";
+export const fmtUSD = v => "$" + Math.round(v).toLocaleString("en-US");
+export const fmtUSDc = v => "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const fmtNum = (v, d = 2) => v.toFixed(d);
+
+// stable color per asset index
+export const SERIES_COLORS = [
+  "var(--accent)", "var(--accent-2)",
+  "oklch(0.72 0.13 295)", "oklch(0.78 0.13 95)",
+  "oklch(0.70 0.13 25)",  "oklch(0.74 0.12 145)",
+  "oklch(0.70 0.12 330)", "oklch(0.76 0.11 60)",
+];
+export function assetColor(i) { return SERIES_COLORS[i % SERIES_COLORS.length]; }
+
+export const I18N = {
+  en: {
+    language: "Language",
+    toggleTheme: "Toggle theme",
+    holdings: "holdings",
+    range: "range",
+    annReturn: "Ann. Return",
+    sharpe: "Sharpe",
+    maxDd: "Max DD",
+    realPrices: "Real Prices",
+    loadingPrices: "Loading Prices",
+    partialPrices: "Partial Prices",
+    mockPrices: "Mock Prices",
+    addInstrument: "Add instrument",
+    searchTicker: "Search ticker or name...",
+    added: "added",
+    noMatch: "No match for",
+    portfolio: "Portfolio",
+    position: "position",
+    positions: "positions",
+    emptyHoldings: "Search above to add your first instrument.",
+    remove: "Remove",
+    lotsTitle: "Position lots (shares)",
+    lotsHelp: "Weights are computed from lots x latest price.",
+    portfolioValue: "Portfolio value",
+    dataRange: "Data range",
+    from: "From",
+    to: "To",
+    analysisProfile: "Analysis profile",
+    advancedAssumptions: "Advanced assumptions",
+    riskFreeRate: "Risk-free rate",
+    rfHelp: "Used in Sharpe & Sortino. Defaults to 3-month T-bill.",
+    mcHorizon: "MC horizon",
+    mcHorizonHelp: "Projection length for Monte Carlo simulation.",
+    mcPaths: "MC paths",
+    mcPathsHelp: "More paths = smoother distribution, slower compute.",
+    dataAdapterReady: "Data adapter ready",
+    proxyChecking: "Proxy checking",
+    proxyReady: "Proxy ready",
+    proxyKeyMissing: "Proxy online - key missing",
+    proxyOffline: "Proxy offline",
+    realPricesCount: "Real prices",
+    partialPricesCount: "Partial prices",
+    loadingHistory: "Loading price history",
+    mockPricesLower: "Mock prices",
+    quoteProfile: "Quote/profile",
+    loadingQuoteProfile: "Loading quote/profile",
+    mockCompanyData: "Mock company data",
+    noHoldingsYet: "No holdings yet",
+    emptyStateHelp: "Use the search in the control panel to add stock or ETF tickers, then enter position lots to build your portfolio.",
+    rateLimitWarn: "Rate limit reached — some data may be delayed.",
+  },
+  tr: {
+    language: "Dil",
+    toggleTheme: "Temayı değiştir",
+    holdings: "varlık",
+    range: "aralık",
+    annReturn: "Yıllık Getiri",
+    sharpe: "Sharpe",
+    maxDd: "Maks. Düşüş",
+    realPrices: "Canlı Fiyat",
+    loadingPrices: "Fiyat Yükleniyor",
+    partialPrices: "Kısmi Fiyat",
+    mockPrices: "Model Fiyat",
+    addInstrument: "Varlık ekle",
+    searchTicker: "Sembol veya şirket ara...",
+    added: "eklendi",
+    noMatch: "Eşleşme yok:",
+    portfolio: "Portföy",
+    position: "pozisyon",
+    positions: "pozisyon",
+    emptyHoldings: "İlk varlığı eklemek için yukarıdaki aramayı kullan.",
+    remove: "Sil",
+    lotsTitle: "Pozisyon lotları",
+    lotsHelp: "Ağırlıklar lot x son fiyat üzerinden hesaplanır.",
+    portfolioValue: "Portföy değeri",
+    dataRange: "Veri aralığı",
+    from: "Başlangıç",
+    to: "Bitiş",
+    analysisProfile: "Profil analizi",
+    advancedAssumptions: "Gelişmiş varsayımlar",
+    riskFreeRate: "Risksiz faiz",
+    rfHelp: "Sharpe ve Sortino hesaplarında kullanılır. Varsayılan olarak 3 aylık T-Bill kabul edilir.",
+    mcHorizon: "MC vadesi",
+    mcHorizonHelp: "Monte Carlo simülasyonu için projeksiyon süresi.",
+    mcPaths: "MC yol sayısı",
+    mcPathsHelp: "Daha fazla yol daha pürüzsüz dağılım üretir, hesaplama süresini artırır.",
+    dataAdapterReady: "Veri adaptörü hazır",
+    proxyChecking: "Proxy kontrol ediliyor",
+    proxyReady: "Proxy hazır",
+    proxyKeyMissing: "Proxy çevrimiçi - key eksik",
+    proxyOffline: "Proxy çevrimdışı",
+    realPricesCount: "Canlı fiyat",
+    partialPricesCount: "Kısmi fiyat",
+    loadingHistory: "Fiyat geçmişi yükleniyor",
+    mockPricesLower: "Model fiyat",
+    quoteProfile: "Quote/profil",
+    loadingQuoteProfile: "Quote/profil yükleniyor",
+    mockCompanyData: "Model şirket verisi",
+    noHoldingsYet: "Henüz varlık yok",
+    emptyStateHelp: "Portföy oluşturmak için kontrol panelindeki aramadan hisse veya ETF sembolü ekle, ardından pozisyon lotlarını gir.",
+    rateLimitWarn: "Rate limit sınırına ulaşıldı — bazı veriler gecikebilir.",
+  },
+};
+
+export function t(lang, key) {
+  return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+}

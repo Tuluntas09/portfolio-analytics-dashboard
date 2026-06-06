@@ -1,0 +1,36 @@
+{
+  "name": "portfolio-analytics-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 8502",
+    "api": "node server/market-data-server.mjs",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 8502",
+    "test:smoke": "node scripts/smoke-check.mjs",
+    "test:api": "node scripts/api-health-check.mjs",
+    "test:history": "node scripts/history-normalization-check.mjs",
+    "test:metrics": "node scripts/metrics-check.mjs",
+    "test:cache": "node scripts/cache-check.mjs",
+    "test:news": "node scripts/news-check.mjs",
+    "test:ratelimit": "node scripts/rate-limit-check.mjs",
+    "test:ui": "node scripts/ui-check.mjs",
+    "test:charts": "node scripts/charts-check.mjs",
+    "test:sidebar": "node scripts/sidebar-check.mjs",
+    "test:overview": "node scripts/overview-check.mjs",
+    "test:analysis": "node scripts/analysis-check.mjs",
+    "test:app": "node scripts/app-check.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "vite": "^7.2.4"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  }
+}

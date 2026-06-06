@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quant Portfolio Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ============================================================
+     QUANT PORTFOLIO ANALYTICS — design tokens
+     Type:  IBM Plex Sans (UI) · IBM Plex Mono (figures)
+     Accent: blue (primary) + teal (secondary); gains green / losses red
+     ============================================================ */
+
+  :root {
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* radii */
+    --r-sm: 5px;
+    --r-md: 8px;
+    --r-lg: 11px;
+
+    /* spacing scale (4px base) */
+    --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+    --s5: 20px; --s6: 24px; --s7: 32px; --s8: 40px;
+
+    --sidebar-w: 312px;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px -12px rgba(0,0,0,.18);
+  }
+
+  /* ---------- DARK (lead) : deep navy-black ---------- */
+  html[data-theme="dark"] {
+    --bg:        oklch(0.155 0.022 256);
+    --bg-2:      oklch(0.135 0.020 256);
+    --panel:     oklch(0.196 0.024 256);
+    --panel-2:   oklch(0.232 0.026 256);
+    --panel-hi:  oklch(0.268 0.028 256);
+    --border:    oklch(0.300 0.022 256);
+    --border-soft: oklch(0.250 0.020 256);
+
+    --text:      oklch(0.962 0.006 256);
+    --text-dim:  oklch(0.745 0.014 256);
+    --text-faint:oklch(0.585 0.016 256);
+
+    --accent:    oklch(0.655 0.135 248);
+    --accent-hi: oklch(0.720 0.130 248);
+    --accent-soft: oklch(0.655 0.135 248 / 0.16);
+    --accent-2:  oklch(0.745 0.115 188);
+    --accent-2-soft: oklch(0.745 0.115 188 / 0.16);
+
+    --pos:       oklch(0.760 0.150 158);
+    --pos-soft:  oklch(0.760 0.150 158 / 0.15);
+    --neg:       oklch(0.680 0.175 22);
+    --neg-soft:  oklch(0.680 0.175 22 / 0.15);
+    --warn:      oklch(0.800 0.130 85);
+
+    --grid:      oklch(0.300 0.020 256 / 0.55);
+    --table-head: oklch(0.225 0.024 256);
+    --table-zebra: oklch(0.176 0.022 256);
+    color-scheme: dark;
+  }
+
+  /* ---------- LIGHT : cool subtle white ---------- */
+  html[data-theme="light"] {
+    --bg:        oklch(0.974 0.004 256);
+    --bg-2:      oklch(0.945 0.006 256);
+    --panel:     oklch(1 0 0);
+    --panel-2:   oklch(0.984 0.004 256);
+    --panel-hi:  oklch(0.958 0.006 256);
+    --border:    oklch(0.905 0.008 256);
+    --border-soft: oklch(0.935 0.006 256);
+
+    --text:      oklch(0.255 0.022 256);
+    --text-dim:  oklch(0.470 0.018 256);
+    --text-faint:oklch(0.620 0.016 256);
+
+    --accent:    oklch(0.545 0.155 252);
+    --accent-hi: oklch(0.480 0.160 252);
+    --accent-soft: oklch(0.545 0.155 252 / 0.10);
+    --accent-2:  oklch(0.560 0.110 195);
+    --accent-2-soft: oklch(0.560 0.110 195 / 0.12);
+
+    --pos:       oklch(0.560 0.150 158);
+    --pos-soft:  oklch(0.560 0.150 158 / 0.12);
+    --neg:       oklch(0.555 0.200 25);
+    --neg-soft:  oklch(0.555 0.200 25 / 0.10);
+    --warn:      oklch(0.680 0.140 70);
+
+    --grid:      oklch(0.255 0.02 256 / 0.10);
+    --table-head: oklch(0.965 0.006 256);
+    --table-zebra: oklch(0.982 0.004 256);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s ease, color .25s ease;
+  }
+  #root { height: 100%; }
+
+  /* numbers — tabular mono everywhere it matters */
+  .num { font-family: var(--font-mono); font-feature-settings: "tnum" 1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+  ::selection { background: var(--accent-soft); }
+
+  /* scrollbars */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); background-clip: padding-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  button, input, select { font-family: inherit; font-size: inherit; color: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  input:focus-visible, button:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+
+  /* utility text */
+  .eyebrow {
+    font-size: 10.5px; font-weight: 600; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+
+  /* transform-only entrance — never gates content on opacity, so background
+     animation throttling can't leave the dashboard invisible */
+  @keyframes fadeUp { from { transform: translateY(7px); } to { transform: none; } }
+  .fade-up { animation: fadeUp .3s cubic-bezier(.2,.7,.3,1) both; }
+  @media (prefers-reduced-motion: reduce) { .fade-up { animation: none; } }
+
+  /* ---- PPTX export mode: one tall slide per tab, full wide layout ---- */
+  body.export-mode { overflow: visible; }
+  body.export-mode .app { height: auto; width: 1920px; align-items: stretch; }
+  body.export-mode .main { height: auto; }
+  body.export-mode .content { overflow: visible; height: auto; padding: 30px 40px 44px; }
+  body.export-mode .tab-body { max-width: none; animation: none; }
+  body.export-mode .sb-scroll { overflow: visible; }
+  body.export-mode .sidebar { width: 320px; }
+  /* force the wide multi-column layout regardless of capture viewport */
+  body.export-mode .kpi-strip { grid-template-columns: repeat(5, 1fr) !important; }
+  body.export-mode .grid-2-1 { grid-template-columns: 1.85fr 1fr !important; }
+  body.export-mode .grid-1-2 { grid-template-columns: 1fr 1.4fr !important; }
+  body.export-mode .grid-2-eq { grid-template-columns: 1fr 1fr !important; }
+  body.export-mode .opt-cards { grid-template-columns: repeat(3, 1fr) !important; }
+  body.export-mode .src-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  body.export-mode .topbar-right .head-metric:last-child { display: flex !important; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="module" src="/src/app.jsx"></script>
+</body>
+</html>
