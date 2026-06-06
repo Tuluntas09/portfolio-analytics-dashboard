@@ -703,15 +703,24 @@ Step 10: Remove Babel Standalone and React UMD CDN from index  ✓ Phase 6i
 
 **Acceptance:** `npm run test:build` 15/15 pass. All existing tests unaffected. Build, smoke, metrics, app, E2E all pass. ✓
 
-#### 7e — Deployment documentation
+#### 7e — Deployment documentation ✓ *Completed 2026-06-07*
 
-Add `docs/DEPLOYMENT.md` covering:
-- Local development (`npm run dev` + `npm run api`)
-- Production build and static hosting (Vercel, Netlify, GitHub Pages)
-- Environment variable setup for Finnhub API key
-- Port configuration for the proxy
+**Goal:** Document all deployment modes and make the project deployable as a Vercel static demo.
 
-**Acceptance:** CI green on main branch push. Browser tests cover the core user flow.
+**What was added:**
+- `vercel.json` — minimal Vercel static config (`buildCommand`, `outputDirectory`, `framework`). No serverless functions, no API routes.
+- `docs/DEPLOYMENT.md` — three deployment modes documented:
+  - **Option A — Vercel static portfolio demo:** frontend-only, mock/offline mode, no API key required. Recommended for GitHub portfolio presentation.
+  - **Option B — Full local live-data mode:** `npm run dev` + `npm run api` + `.env.local` with `FINNHUB_API_KEY`. Recommended for development.
+  - **Option C — Future full production live-data mode:** Vercel frontend + separate proxy host (Render/Railway/Fly.io). `VITE_API_BASE_URL` is the only Vercel env var; `FINNHUB_API_KEY` stays on proxy host only.
+- `README.md`: `## Deployment` section added with a three-mode summary table and link to `docs/DEPLOYMENT.md`. Roadmap row updated to ✅ Done.
+
+**Security constraints preserved:**
+- `FINNHUB_API_KEY` not used as a Vercel environment variable.
+- Key never prefixed `VITE_`, never included in the browser bundle.
+- `VITE_API_BASE_URL` explicitly identified as the only safe Vercel env var (points at proxy host, not a secret).
+
+**Acceptance:** `npm run build` clean. `npm run test:build` 15/15 pass. Smoke, E2E, app tests unaffected. `vercel.json` present. `docs/DEPLOYMENT.md` present with all three deployment options. ✓
 
 ---
 

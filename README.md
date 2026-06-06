@@ -288,6 +288,20 @@ portfolio-analytics-dashboard/
 
 ---
 
+## Deployment
+
+| Mode | Frontend | Proxy | API key |
+|---|---|---|---|
+| **A — Vercel static demo** | Vercel (mock/offline) | Not deployed | Not required |
+| **B — Local live-data** | `npm run dev` | `npm run api` | `.env.local` |
+| **C — Future production** | Vercel | Render / Railway / Fly.io | Proxy host only |
+
+`FINNHUB_API_KEY` stays on the proxy host in every mode. It is never a Vercel environment variable and is never included in the browser bundle.
+
+See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for step-by-step instructions for each mode.
+
+---
+
 ## Product Boundary
 
 This dashboard is a **personal analytics tool** for exploring portfolio metrics and risk scenarios. It does not:
@@ -316,7 +330,7 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | Playwright E2E foundation (19 tests) |
 | ✅ Done | Data-quality transparency panel |
 | ✅ Done | GitHub Actions CI (build + all Node.js suites + E2E) |
-| 🔲 Planned | Deployment guide (Vercel / Netlify static + proxy notes) |
+| ✅ Done | Deployment guide (Vercel static demo + local live-data + future production) |
 | ✅ Done | Screenshots (Overview + Risk Analytics tabs) |
 | 🔲 Planned | CSV portfolio import/export |
 | 🔲 Planned | Saved portfolios (localStorage) |

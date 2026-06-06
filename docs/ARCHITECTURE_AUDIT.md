@@ -116,7 +116,7 @@ Breaking this order crashes the app silently at runtime.
 
 **Remaining gap:** None — all Phase 6 migration steps complete. The window.* coupling map in Section 2 is now historical; the browser runtime no longer reads any `window.*` globals (only the legacy shim files still write to them, unused). Phase 7 CI/CD is the next pending work.
 
-**Migration path:** Phase 6 complete. Phase 7 — CI, build validation, deployment docs.
+**Migration path:** Phase 6 complete. Phase 7 — CI, build validation, and deployment docs all complete. See `docs/DEPLOYMENT.md` for the frontend/proxy split and three deployment modes.
 
 ### Risk 3 — Single-file analytics monolith *(Partially resolved in Phase 6b — 2026-06-06)*
 
