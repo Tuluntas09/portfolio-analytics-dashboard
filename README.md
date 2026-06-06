@@ -5,11 +5,14 @@
 **Personal portfolio analytics and risk-monitoring dashboard**  
 Vite React · Finnhub/Yahoo Finance proxy · Monte Carlo simulation · portfolio optimization scenarios · company news · data-quality transparency
 
+[![CI](https://github.com/Tuluntas09/portfolio-analytics-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Tuluntas09/portfolio-analytics-dashboard/actions/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Node.js Proxy](https://img.shields.io/badge/Node.js-Proxy-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)](.)
+
+> CI badge activates once the repository is pushed to `Tuluntas09/portfolio-analytics-dashboard` on GitHub.
 
 </div>
 

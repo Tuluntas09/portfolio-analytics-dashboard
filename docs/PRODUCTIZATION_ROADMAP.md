@@ -634,26 +634,40 @@ Step 10: Remove Babel Standalone and React UMD CDN from index  ✓ Phase 6i
 
 ### Tasks
 
-#### 7a — Playwright browser tests
+#### 7a — Playwright browser tests ✓ *Completed (19 tests — established during Phase 6)*
 
-Add `npm run test:browser` with Playwright:
-- App loads without console errors
-- Overview tab renders KPI strip
-- Adding a ticker via the search shows it in the holdings list
-- Switching between all 7 tabs does not crash
-- Theme toggle switches CSS variables
-- Language toggle changes displayed text
-- Empty portfolio shows the empty state, not a crash
+19 Playwright Chromium tests covering: app load, all 7 tabs, holdings interaction, mock fallback, theme toggle, language toggle, empty state, rapid tab cycling, proxy-offline resilience. Tests were added before the Phase 6 runtime migration so they served as a regression guard during the Babel → Vite cutover.
 
-#### 7b — GitHub Actions CI
+`npm run test:e2e` | 19/19 pass. `npm run test:e2e:headed` and `npm run test:e2e:debug` also wired in `package.json`. ✓
 
-Add `.github/workflows/ci.yml`:
-- `npm install`
-- `npm run build`
-- `npm run test:smoke`
-- `npm run test:api`
-- `npm run test:history`
-- `npm run test:browser` (headless Playwright)
+#### 7b — GitHub Actions CI ✓ *Completed 2026-06-07*
+
+`.github/workflows/ci.yml` added. Runs on every push and pull request.
+
+**Workflow:** Ubuntu latest · Node.js 20 · `npm ci` · Playwright Chromium install → `npm run build` → 13 Node.js validation suites → `npm run test:e2e` → upload `test-results/` artifact on failure (7-day retention).
+
+**Node.js validation suites run in CI:**
+- `test:smoke` — index.html entry point, adapter exports, tab order
+- `test:metrics` — financial formula correctness (Sharpe, CVaR, beta, rf propagation)
+- `test:api` — proxy health endpoint, missing-symbol 400, no-key 503 behavior
+- `test:history` — Finnhub + Yahoo Finance payload normalization
+- `test:cache` — TTL cache, in-flight dedup, bounded eviction
+- `test:news` — company news fetch, normalizer, rate-limit handling
+- `test:ratelimit` — 429 detection, Retry-After parsing, Yahoo fallback on 429
+- `test:ui` — formatter functions, i18n keys, color utilities
+- `test:charts` — chart component exports, pragma, React npm import
+- `test:sidebar` — Sidebar exports, PROFILES, i18n, prop surface
+- `test:overview` — OverviewTab/RiskTab exports, data-provider logic
+- `test:analysis` — 5 analysis tab exports, non-advisory copy, news handling
+- `test:app` — 25 acceptance criteria for Phase 6i migration
+
+**CI constraints:**
+- No `FINNHUB_API_KEY` required. `test:api` branches on the missing key (expects 503 for live endpoints) and passes cleanly. All other tests use mock data or source-text analysis.
+- No deployment step.
+- No matrix build (single Node.js 20 / Ubuntu target is sufficient for a personal portfolio project).
+- Playwright Chromium only — matches the local E2E configuration.
+
+**README:** CI badge added pointing to `Tuluntas09/portfolio-analytics-dashboard` workflow. Badge activates once the repository is pushed to GitHub.
 
 #### 7c — Build output validation
 

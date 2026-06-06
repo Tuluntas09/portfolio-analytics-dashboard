@@ -79,12 +79,16 @@ Breaking this order crashes the app silently at runtime.
 
 ## 3. Architecture Risk Assessment
 
-### Risk 1 — Browser-side Babel transpilation (High)
+### Risk 1 — Browser-side Babel transpilation ✓ *Resolved — Phase 6i (2026-06-06)*
 
-**What it is:** `@babel/standalone` (3 MB compressed) transpiles all JSX at page load time in the user's browser.  
-**Consequence:** 200–600 ms parse+transpile cost on every cold load; no caching benefit between files; error messages point to generated output, not source lines.  
-**Production norm:** Vite already in the project; JSX should be compiled at build time, not runtime.  
-**Migration path:** Phase 6 in the roadmap.
+**What it was:** `@babel/standalone` (3 MB compressed) transpiled all JSX at page load time in the user's browser.  
+**Consequence:** 200–600 ms parse+transpile cost on every cold load; no caching benefit between files; error messages pointed to generated output, not source lines.  
+**Resolution (Phase 6i):** Babel Standalone and React UMD CDN scripts removed from `index.html`. `src/app.jsx` is now the module entry; Vite compiles all JSX at build time. Production build: 318 kB JS / 97 kB gzip, 30 modules, ~700 ms build time.
+
+### Risk 6 — No CI or reproducible build environment ✓ *Resolved — Phase 7b (2026-06-07)*
+
+**What it was:** All tests ran locally only. No guarantee the build or tests would pass in a clean environment or on a fresh clone.  
+**Resolution:** `.github/workflows/ci.yml` added. Runs on every push and pull request: `npm ci` → Playwright Chromium install → `npm run build` → 13 Node.js validation suites → `npm run test:e2e` (19 Playwright tests). Ubuntu latest, Node.js 20. No `FINNHUB_API_KEY` required — `test:api` handles the missing-key branch explicitly; all other tests use mock data or source-text analysis. Playwright test-results artifact uploaded on failure (7-day retention).
 
 ### Risk 2 — Global window coupling *(Partially resolved — Phase 6b/6c — 2026-06-06)*
 
