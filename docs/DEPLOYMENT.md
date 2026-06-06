@@ -2,6 +2,9 @@
 
 **Quant Portfolio Analytics Dashboard**
 
+**Public demo:** https://portfolio-analytics-dashboard-three.vercel.app/  
+Deployment mode: Vercel static frontend (Option A). Live data requires a separate/local proxy — see Option B below.
+
 ---
 
 ## Overview
@@ -27,7 +30,11 @@ Deploy the Vite frontend to Vercel as a static site. The dashboard loads and all
 
 **Live data:** not available in this mode — the proxy is not deployed.
 
-### Deploy to Vercel
+### Public demo
+
+**https://portfolio-analytics-dashboard-three.vercel.app/**
+
+The live demo is already deployed. You can also deploy your own copy:
 
 ```bash
 # 1. Push the repository to GitHub (already done)

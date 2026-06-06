@@ -5,6 +5,7 @@
 **Personal portfolio analytics and risk-monitoring dashboard**  
 Vite React · Finnhub/Yahoo Finance proxy · Monte Carlo simulation · portfolio optimization scenarios · company news · data-quality transparency
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://portfolio-analytics-dashboard-three.vercel.app/)
 [![CI](https://github.com/Tuluntas09/portfolio-analytics-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Tuluntas09/portfolio-analytics-dashboard/actions/workflows/ci.yml)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
@@ -290,9 +291,11 @@ portfolio-analytics-dashboard/
 
 ## Deployment
 
+**Live demo:** [portfolio-analytics-dashboard-three.vercel.app](https://portfolio-analytics-dashboard-three.vercel.app/) — static frontend, mock/offline data, no API key required.
+
 | Mode | Frontend | Proxy | API key |
 |---|---|---|---|
-| **A — Vercel static demo** | Vercel (mock/offline) | Not deployed | Not required |
+| **A — Vercel static demo** | [Vercel (live)](https://portfolio-analytics-dashboard-three.vercel.app/) | Not deployed | Not required |
 | **B — Local live-data** | `npm run dev` | `npm run api` | `.env.local` |
 | **C — Future production** | Vercel | Render / Railway / Fly.io | Proxy host only |
 
@@ -330,7 +333,7 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | Playwright E2E foundation (19 tests) |
 | ✅ Done | Data-quality transparency panel |
 | ✅ Done | GitHub Actions CI (build + all Node.js suites + E2E) |
-| ✅ Done | Deployment guide (Vercel static demo + local live-data + future production) |
+| ✅ Done | Vercel static demo deployed — [live demo](https://portfolio-analytics-dashboard-three.vercel.app/) |
 | ✅ Done | Screenshots (Overview + Risk Analytics tabs) |
 | 🔲 Planned | CSV portfolio import/export |
 | 🔲 Planned | Saved portfolios (localStorage) |
