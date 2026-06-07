@@ -1,7 +1,7 @@
 # Productization Roadmap
 
 **Project:** Quant Portfolio Analytics Dashboard  
-**Date:** 2026-06-06  
+**Date:** 2026-06-07  
 **Goal:** Gradual, safe evolution from CV/GitHub prototype to real-world personal portfolio analytics tool.
 
 ---
@@ -843,6 +843,25 @@ Malformed non-string values are coerced safely via `String(value ?? "")`.
 `scripts/notes-check.mjs` (35 tests); `scripts/portfolio-storage-check.mjs` — updated call sites for new signature.
 
 **Acceptance:** `npm run test:notes` 35/35 pass. All 20 Node.js test suites pass. `npm run build` clean. ✓
+
+### 8g — Documentation close-out ✓
+
+Phase 8g is not a product feature phase. It is a documentation and git hygiene pass
+performed after all Phase 8 sub-phases (8a–8f) were confirmed complete and all tests green.
+
+**What was done:**
+- README features table updated to include all six Phase 8 features
+- README roadmap section updated: no stale "Planned" rows remain
+- README test count updated from 14 → 20 Node.js suites
+- README build stats updated to reflect current build output (286 kB / 88 kB gzip / 31 modules)
+- README testing command list extended with six Phase 8 test scripts
+- This roadmap document date updated to 2026-06-07
+- Phase 8 closure note added (this section)
+- All 4 pending local commits (Phase 8c–8f) pushed to `origin/main`
+- Annotated release tag `v2.0.0` created and pushed
+
+**Phase 8 is complete.** All usability features defined in the Phase 8 roadmap are
+implemented, tested, and documented. The repository is tagged at `v2.0.0`.
 
 ---
 

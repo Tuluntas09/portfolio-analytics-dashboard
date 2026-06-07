@@ -52,6 +52,12 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Backend Reliability** | Per-route TTL cache, in-flight request deduplication, Finnhub 429 guard with `Retry-After` parsing |
 | **Playwright E2E Tests** | 19 browser tests covering core flows (load, tab navigation, holdings, theme, language, empty state) |
 | **Non-Advisory Language** | All optimization outputs are labeled as hypothetical model scenarios; no buy/sell signals are generated |
+| **CSV Import / Export** | Import holdings from a CSV file (`ticker,lots`); export current portfolio to CSV |
+| **Saved Portfolios** | Save up to 10 named portfolios to localStorage; load, overwrite, delete, reset |
+| **Print Report** | One-click print/PDF export of the active tab — sidebar and navigation hidden via `@media print` |
+| **Custom Date Range** | User-controlled analysis window with two date pickers and client-side validation |
+| **Extended Tickers** | Add valid tickers beyond the canonical 15-instrument universe; synthetic GBM fallback until real data loads |
+| **Portfolio Notes** | 500-character plain-text annotation saved with each named portfolio |
 
 ---
 
@@ -67,8 +73,8 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Market Data** | Finnhub REST API (quotes, candles, profile, news) |
 | **History Fallback** | Yahoo Finance chart API (`/v8/finance/chart`) |
 | **Mock Data** | Deterministic GBM price model with seeded Mulberry32 RNG |
-| **Testing** | 14 Node.js script test suites + Playwright Chromium E2E |
-| **Build** | Vite production build — 268 kB JS / 83 kB gzip |
+| **Testing** | 20 Node.js script test suites + Playwright Chromium E2E |
+| **Build** | Vite production build — 286 kB JS / 88 kB gzip |
 | **Security** | Finnhub API key stays server-side; never bundled by Vite or sent to the browser |
 
 ---
@@ -192,6 +198,12 @@ npm run test:sidebar      # Sidebar exports, PROFILES, i18n, prop surface
 npm run test:overview     # OverviewTab / RiskTab exports, data-provider logic
 npm run test:analysis     # 5 analysis tab exports, non-advisory copy, news handling
 npm run test:app          # src/app.jsx: 25 acceptance criteria for Phase 6i migration
+npm run test:portfolios   # named saved portfolios (localStorage round-trip, schema, max-10)
+npm run test:csv          # CSV import/export (parsing, normalization, round-trip)
+npm run test:export       # Print Report button and @media print behavior
+npm run test:daterange    # custom date range picker validation helpers
+npm run test:universe     # extended ticker support (isValidTicker, DEFAULT_GBM, buildPortfolio)
+npm run test:notes        # portfolio notes (save/load/reset, backward compat, 500-char cap)
 
 # Playwright E2E (Chromium)
 npm run test:e2e          # 19 browser tests — load, tabs, holdings, theme, language, empty state
@@ -201,9 +213,9 @@ npm run test:e2e:headed   # same tests with visible browser window
 | Metric | Result |
 |---|---|
 | Build validation checks | 15 / 15 pass |
-| Node.js test suites | 14 / 14 pass |
+| Node.js test suites | 20 / 20 pass |
 | Playwright E2E | 19 / 19 pass |
-| Production build | 261 kB JS · 81 kB gzip · 28 modules · 0 warnings |
+| Production build | 286 kB JS · 88 kB gzip · 31 modules · 0 warnings |
 
 ---
 
@@ -335,9 +347,12 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | GitHub Actions CI (build + all Node.js suites + E2E) |
 | ✅ Done | Vercel static demo deployed — [live demo](https://portfolio-analytics-dashboard-three.vercel.app/) |
 | ✅ Done | Screenshots (Overview + Risk Analytics tabs) |
-| 🔲 Planned | CSV portfolio import/export |
-| 🔲 Planned | Saved portfolios (localStorage) |
-| 🔲 Planned | User-selectable benchmark |
+| ✅ Done | CSV portfolio import/export |
+| ✅ Done | Saved portfolios (localStorage, up to 10 named) |
+| ✅ Done | Print report (browser print / PDF export) |
+| ✅ Done | Custom date range picker |
+| ✅ Done | Extended ticker support (beyond canonical 15-instrument universe) |
+| ✅ Done | Portfolio notes (plain-text annotation per saved portfolio) |
 
 ---
 
