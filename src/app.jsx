@@ -20,6 +20,7 @@ import { createRoot } from "react-dom/client";
 import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE } from "./data.js";
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry } from "./portfolioStorage.js";
 import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
+import { getDefaultCustomFrom, calendarToTradingDays } from "./dateUtils.js";
 import { fmtUSD, fmtPctSigned, fmtNum, fmtPct, t } from "./ui.js";
 import { Pill } from "./ui.jsx";
 import { Sidebar } from "./sidebar.jsx";
@@ -41,8 +42,11 @@ const PROFILE_LABELS = {
 };
 const API_BASE_URL = DATA_SOURCES.real && DATA_SOURCES.real.baseUrl ? DATA_SOURCES.real.baseUrl : "http://127.0.0.1:8787";
 const API_HEALTH_URL = API_BASE_URL + "/api/health";
-function historyWindow(range) {
-  const daysForRange = { "6M": 190, "1Y": 380, "2Y": 760, "5Y": 1900, "Custom": 900 };
+function historyWindow(range, customFrom, customTo) {
+  if (range === "Custom" && customFrom && customTo) {
+    return { from: customFrom, to: customTo };
+  }
+  const daysForRange = { "6M": 190, "1Y": 380, "2Y": 760, "5Y": 1900 };
   const to = new Date();
   const from = new Date(to);
   from.setUTCDate(from.getUTCDate() - (daysForRange[range] || 760));
@@ -56,6 +60,8 @@ function App() {
   const [holdings, setHoldings] = useState(() =>
     Object.entries(DEFAULT_LOTS).map(([t, lots]) => ({ t, lots })));
   const [dateRange, setDateRange] = useState("2Y");
+  const [customFrom, setCustomFrom] = useState(getDefaultCustomFrom);
+  const [customTo, setCustomTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [profile, setProfile] = useState("balanced");
   const [assumptions, setAssumptions] = useState({ rf: 0.043, horizon: 5, paths: 2000 });
   const [tab, setTab] = useState("overview");
@@ -118,7 +124,7 @@ function App() {
     return () => { active = false; };
   }, []);
 
-  const daysFor = { "6M": 126, "1Y": 252, "2Y": 504, "5Y": 1260, "Custom": 600 };
+  const daysFor = { "6M": 126, "1Y": 252, "2Y": 504, "5Y": 1260 };
 
   useEffect(() => {
     const symbols = holdings.map(h => h.t);
@@ -134,7 +140,7 @@ function App() {
     }
 
     const controller = new AbortController();
-    const { from, to } = historyWindow(dateRange);
+    const { from, to } = historyWindow(dateRange, customFrom, customTo);
     const uniqueSymbols = Array.from(new Set([...symbols, "VTI"]));
     setMarketDataStatus({ status: "loading", message: "Loading market history", loaded: 0, requested: symbols.length });
 
@@ -167,7 +173,7 @@ function App() {
     });
 
     return () => controller.abort();
-  }, [holdings, dateRange, apiStatus.ok]);
+  }, [holdings, dateRange, customFrom, customTo, apiStatus.ok]);
 
   useEffect(() => {
     const symbols = holdings.map(h => h.t);
@@ -220,15 +226,20 @@ function App() {
     return () => controller.abort();
   }, [holdings, apiStatus.ok]);
 
-  const p = useMemo(() => dataAdapter.buildPortfolio(holdings, {
-    days: daysFor[dateRange] || 504, profile,
-    rf: assumptions.rf,
-    seed: 20260604 + (dateRange.length * 13),
-    source: Object.keys(historyBySymbol).length || Object.keys(quoteBySymbol).length || Object.keys(profileBySymbol).length ? "real" : "mock",
-    historyBySymbol,
-    quoteBySymbol,
-    profileBySymbol,
-  }), [holdings, dateRange, profile, dataAdapter, historyBySymbol, quoteBySymbol, profileBySymbol, assumptions.rf]);
+  const p = useMemo(() => {
+    const days = dateRange === "Custom"
+      ? calendarToTradingDays(customFrom, customTo)
+      : (daysFor[dateRange] || 504);
+    return dataAdapter.buildPortfolio(holdings, {
+      days, profile,
+      rf: assumptions.rf,
+      seed: 20260604 + (dateRange.length * 13),
+      source: Object.keys(historyBySymbol).length || Object.keys(quoteBySymbol).length || Object.keys(profileBySymbol).length ? "real" : "mock",
+      historyBySymbol,
+      quoteBySymbol,
+      profileBySymbol,
+    });
+  }, [holdings, dateRange, customFrom, customTo, profile, dataAdapter, historyBySymbol, quoteBySymbol, profileBySymbol, assumptions.rf]);
 
   // apply risk-free assumption to derived stats
   const pAdj = useMemo(() => {
@@ -306,6 +317,8 @@ function App() {
         instruments={dataAdapter.listInstruments()} dataSource={pAdj.source}
         onAdd={addTicker} onRemove={removeTicker} onLots={setLots}
         dateRange={dateRange} setDateRange={setDateRange}
+        customFrom={customFrom} setCustomFrom={setCustomFrom}
+        customTo={customTo} setCustomTo={setCustomTo}
         profile={profile} setProfile={setProfile}
         assumptions={assumptions} setAssumptions={setAssumptions}
         theme={theme} toggleTheme={() => setTheme(t => t === "dark" ? "light" : "dark")}
@@ -332,7 +345,7 @@ function App() {
               <span className="dot-sep" />
               <span className="num">{fmtUSD(pAdj.totalValue)}</span>
               <span className="dot-sep" />
-              <span>{dateRange} {t(language, "range")}</span>
+              <span>{dateRange === "Custom" ? `${customFrom} → ${customTo}` : dateRange} {t(language, "range")}</span>
               <span className="dot-sep" />
               <Pill tone="accent" size="sm">{profileLabel}</Pill>
               <Pill tone={marketDataStatus.status === "ready" ? "pos" : marketDataStatus.status === "partial" ? "warn" : "neutral"} size="sm">

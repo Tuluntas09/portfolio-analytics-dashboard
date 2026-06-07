@@ -794,11 +794,21 @@ New i18n key `printReport` (EN + TR). New test suite `scripts/export-check.mjs` 
 
 **Acceptance:** `npm run test:export` 10/10 pass. All 16 Node.js test suites pass. `npm run build` clean. ✓
 
-### 8d — Custom date range
+### 8d — Custom date range ✓
 
-The sidebar "Custom" date range option currently uses a hardcoded 900-day window.
-Add a proper date range picker (two `<input type="date">` fields) that drives
-the `from`/`to` parameters passed to the proxy.
+When the "Custom" preset is selected in the sidebar, two `<input type="date">` fields
+replace the static display. Validation rejects missing dates, start ≥ end, future end
+dates, and ranges shorter than 30 days — showing a compact inline error below the inputs.
+Valid selections update `customFrom`/`customTo` state in `app.jsx`, which is forwarded
+to `historyWindow()` (data fetch) and `calendarToTradingDays()` (analytics window).
+All preset buttons (6M/1Y/2Y/5Y) retain their existing computed dates. The `rangeStart`
+display helper was updated to compute dynamically instead of using hardcoded strings.
+
+Pure helpers (`getDefaultCustomFrom`, `validateDateRange`, `calendarToTradingDays`) live
+in `src/dateUtils.js` for testability. New i18n keys: `customDateRange`, `dateRangeMissing`,
+`dateRangeStartAfterEnd`, `dateRangeFutureEnd`, `dateRangeTooShort` (EN + TR).
+
+**Acceptance:** `npm run test:daterange` 19/19 pass. All 18 Node.js test suites pass. `npm run build` clean. ✓
 
 ### 8e — Instrument universe expansion
 

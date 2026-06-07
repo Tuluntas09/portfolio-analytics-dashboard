@@ -28,7 +28,8 @@
     "capture:screenshots": "node scripts/capture-screenshots.mjs",
     "test:portfolios": "node scripts/portfolio-storage-check.mjs",
     "test:csv": "node scripts/csv-check.mjs",
-    "test:export": "node scripts/export-check.mjs"
+    "test:export": "node scripts/export-check.mjs",
+    "test:daterange": "node scripts/date-range-check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

@@ -24,6 +24,7 @@
 import React from "react";
 import { t, fmtUSD } from "./ui.js";
 import { UNIVERSE, lookup } from "./data.js";
+import { validateDateRange } from "./dateUtils.js";
 
 const { useState: useStateSB, useRef: useRefSB, useEffect: useEffectSB } = React;
 
@@ -67,7 +68,8 @@ const DATE_PRESETS = ["6M", "1Y", "2Y", "5Y", "Custom"];
 
 export function Sidebar(props) {
   const { holdings, assets, totalValue, instruments, dataSource, apiStatus, marketDataStatus, referenceDataStatus, onAdd, onRemove, onLots,
-    dateRange, setDateRange, profile, setProfile,
+    dateRange, setDateRange, customFrom = "", customTo = "", setCustomFrom, setCustomTo,
+    profile, setProfile,
     assumptions, setAssumptions, theme, toggleTheme, language = "tr", toggleLanguage, lastUpdated,
     savedPortfolios = [], onSavePortfolio, onLoadPortfolio, onDeletePortfolio, onResetPortfolio,
     onImportCsv, onExportCsv } = props;
@@ -81,6 +83,9 @@ export function Sidebar(props) {
   const [saveError, setSaveError] = useStateSB("");
   const [csvSummary, setCsvSummary] = useStateSB(null);
   const csvInputRef = useRefSB(null);
+  const [draftFrom, setDraftFrom] = useStateSB(() => customFrom || "");
+  const [draftTo, setDraftTo] = useStateSB(() => customTo || "");
+  const [dateError, setDateError] = useStateSB(null);
 
   const held = new Set(holdings.map(h => h.t));
   const universe = instruments || UNIVERSE;
@@ -373,13 +378,47 @@ export function Sidebar(props) {
           </div>
           <div className="seg-row">
             {DATE_PRESETS.map(p => (
-              <button key={p} className={"seg-btn" + (dateRange === p ? " on" : "")} onClick={() => setDateRange(p)}>{p}</button>
+              <button key={p} className={"seg-btn" + (dateRange === p ? " on" : "")} onClick={() => { setDateRange(p); setDateError(null); }}>{p}</button>
             ))}
           </div>
-          <div className="date-fields">
-            <div className="date-field"><span>{t(language, "from")}</span><span className="num">{rangeStart(dateRange)}</span></div>
-            <div className="date-field"><span>{t(language, "to")}</span><span className="num">2026-06-04</span></div>
-          </div>
+          {dateRange === "Custom" ? (
+            <>
+              <div className="date-fields">
+                <div className="date-field">
+                  <span>{t(language, "from")}</span>
+                  <input type="date" className="date-input"
+                    value={draftFrom}
+                    max={draftTo || new Date().toISOString().slice(0, 10)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setDraftFrom(val);
+                      const err = validateDateRange(val, draftTo);
+                      setDateError(err);
+                      if (!err && setCustomFrom) setCustomFrom(val);
+                    }} />
+                </div>
+                <div className="date-field">
+                  <span>{t(language, "to")}</span>
+                  <input type="date" className="date-input"
+                    value={draftTo}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setDraftTo(val);
+                      const err = validateDateRange(draftFrom, val);
+                      setDateError(err);
+                      if (!err && setCustomTo) setCustomTo(val);
+                    }} />
+                </div>
+              </div>
+              {dateError && <p className="date-error">{t(language, dateError)}</p>}
+            </>
+          ) : (
+            <div className="date-fields">
+              <div className="date-field"><span>{t(language, "from")}</span><span className="num">{rangeStart(dateRange)}</span></div>
+              <div className="date-field"><span>{t(language, "to")}</span><span className="num">{new Date().toISOString().slice(0, 10)}</span></div>
+            </div>
+          )}
         </div>
 
         {/* ===== ANALYSIS PROFILE ===== */}
@@ -530,6 +569,9 @@ export function Sidebar(props) {
           background: var(--panel); border: 1px solid var(--border-soft); }
         .date-field span:first-child { font-size: 9.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .05em; }
         .date-field span:last-child { font-size: 12px; color: var(--text); }
+        .date-input { font-size: 12px; color: var(--text); background: transparent; border: none;
+          padding: 0; width: 100%; cursor: pointer; }
+        .date-error { font-size: 11px; color: var(--neg); margin-top: 6px; text-align: center; }
 
         /* profile */
         .prof-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
@@ -603,6 +645,8 @@ export function Sidebar(props) {
 }
 
 function rangeStart(r) {
-  const map = { "6M": "2025-12-04", "1Y": "2025-06-04", "2Y": "2024-06-04", "5Y": "2021-06-04", "Custom": "2023-01-01" };
-  return map[r] || "2024-06-04";
+  const days = { "6M": 190, "1Y": 380, "2Y": 760, "5Y": 1900 };
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - (days[r] || 760));
+  return d.toISOString().slice(0, 10);
 }

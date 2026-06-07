@@ -100,6 +100,11 @@ export const I18N = {
     csvReadError: "Could not read file",
     csvUnsupported: "Unsupported:",
     printReport: "Print Report",
+    customDateRange: "Custom date range",
+    dateRangeMissing: "Start and end date required",
+    dateRangeStartAfterEnd: "Start must be before end",
+    dateRangeFutureEnd: "End date cannot be in the future",
+    dateRangeTooShort: "Range must be at least 30 days",
   },
   tr: {
     language: "Dil",
@@ -171,6 +176,11 @@ export const I18N = {
     csvReadError: "Dosya okunamadı",
     csvUnsupported: "Desteklenmiyor:",
     printReport: "Raporu Yazdır",
+    customDateRange: "Özel tarih aralığı",
+    dateRangeMissing: "Başlangıç ve bitiş tarihi gerekli",
+    dateRangeStartAfterEnd: "Başlangıç bitiş tarihinden önce olmalı",
+    dateRangeFutureEnd: "Bitiş tarihi gelecekte olamaz",
+    dateRangeTooShort: "Aralık en az 30 gün olmalı",
   },
 };
 
