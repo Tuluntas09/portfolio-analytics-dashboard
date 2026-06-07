@@ -88,6 +88,7 @@ function App() {
     requested: 0,
   });
   const [savedPortfolios, setSavedPortfolios] = useState(() => loadSaves());
+  const [portfolioNote, setPortfolioNote] = useState("");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -256,7 +257,7 @@ function App() {
   function setLots(t, lots) { setHoldings(h => h.map(x => x.t === t ? { ...x, lots } : x)); }
 
   function handleSavePortfolio(name) {
-    const result = savePortfolio(name, holdings, assumptions);
+    const result = savePortfolio(name, holdings, assumptions, portfolioNote);
     if (result.ok) setSavedPortfolios(loadSaves());
     return result;
   }
@@ -265,6 +266,7 @@ function App() {
     if (!loaded) return false;
     setHoldings(loaded.holdings);
     setAssumptions(loaded.assumptions);
+    setPortfolioNote(loaded.notes ?? "");
     return true;
   }
   function handleDeletePortfolio(name) {
@@ -274,6 +276,7 @@ function App() {
   function handleResetPortfolio() {
     setHoldings(Object.entries(DEFAULT_LOTS).map(([tkr, lots]) => ({ t: tkr, lots })));
     setAssumptions({ rf: 0.043, horizon: 5, paths: 2000 });
+    setPortfolioNote("");
   }
 
   function handleImportCsv(csvText) {
@@ -331,7 +334,9 @@ function App() {
         onDeletePortfolio={handleDeletePortfolio}
         onResetPortfolio={handleResetPortfolio}
         onImportCsv={handleImportCsv}
-        onExportCsv={handleExportCsv} />
+        onExportCsv={handleExportCsv}
+        portfolioNote={portfolioNote}
+        setPortfolioNote={setPortfolioNote} />
 
       <main className="main">
         {/* top bar */}

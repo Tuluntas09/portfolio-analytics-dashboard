@@ -32,7 +32,7 @@ export function loadSaves(storage = globalThis.localStorage) {
 // Persists the current portfolio under `name`.
 // Overwrites silently if a save with that name already exists.
 // Returns { ok: true } or { ok: false, error: string }.
-export function savePortfolio(name, holdings, assumptions, storage = globalThis.localStorage) {
+export function savePortfolio(name, holdings, assumptions, notes = "", storage = globalThis.localStorage) {
   if (!storage) return { ok: false, error: "storage_error" };
 
   const trimmed = sanitizeName(name);
@@ -50,6 +50,7 @@ export function savePortfolio(name, holdings, assumptions, storage = globalThis.
       horizon: Number(assumptions.horizon),
       paths: Number(assumptions.paths),
     },
+    notes: String(notes ?? "").slice(0, 500),
     savedAt: new Date().toISOString(),
   };
 
@@ -109,6 +110,7 @@ export function validateEntry(entry, validTickers) {
   return {
     holdings: holdings.map(h => ({ t: h.t, lots: h.lots })),
     assumptions: { rf, horizon, paths },
+    notes: String(entry.notes ?? "").slice(0, 500),
   };
 }
 

@@ -53,7 +53,7 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
 // ── 3. Valid save serializes holdings + assumptions only ──────────────────────
 {
   const s = makeStorage();
-  const r = savePortfolio("Alpha Save", HOLDINGS_A, ASSUMPTIONS_A, s);
+  const r = savePortfolio("Alpha Save", HOLDINGS_A, ASSUMPTIONS_A, "", s);
   if (!r.ok) fail(`savePortfolio failed: ${r.error}`);
   const saves = loadSaves(s);
   if (saves.length !== 1) fail(`Expected 1 save, got ${saves.length}`);
@@ -73,7 +73,7 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
 // ── 4. Computed metrics / fetched data are NOT serialized ─────────────────────
 {
   const s = makeStorage();
-  savePortfolio("Beta Save", HOLDINGS_A, ASSUMPTIONS_A, s);
+  savePortfolio("Beta Save", HOLDINGS_A, ASSUMPTIONS_A, "", s);
   const raw = JSON.parse(s.getItem(STORAGE_KEY));
   const entry = raw[0];
   const forbidden = ["annRet", "annVol", "mdd", "sharpe", "sortino", "cvar95", "beta",
@@ -91,11 +91,11 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
 {
   const s = makeStorage();
   for (let i = 1; i <= MAX_SAVES; i++) {
-    const r = savePortfolio(`Portfolio ${i}`, HOLDINGS_A, ASSUMPTIONS_A, s);
+    const r = savePortfolio(`Portfolio ${i}`, HOLDINGS_A, ASSUMPTIONS_A, "", s);
     if (!r.ok) fail(`Save #${i} should succeed, got error: ${r.error}`);
   }
   if (loadSaves(s).length !== MAX_SAVES) fail(`Expected ${MAX_SAVES} saves after max fills`);
-  const overflow = savePortfolio("Overflow", HOLDINGS_A, ASSUMPTIONS_A, s);
+  const overflow = savePortfolio("Overflow", HOLDINGS_A, ASSUMPTIONS_A, "", s);
   if (overflow.ok) fail("Saving beyond max should return ok:false");
   if (overflow.error !== "max_reached") fail(`Expected error "max_reached", got "${overflow.error}"`);
   if (loadSaves(s).length !== MAX_SAVES) fail("Overflow save must not be added");
@@ -105,8 +105,8 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
 // ── 6. Duplicate name overwrites the existing entry ───────────────────────────
 {
   const s = makeStorage();
-  savePortfolio("My Portfolio", [{ t: "AAPL", lots: 10 }], ASSUMPTIONS_A, s);
-  savePortfolio("My Portfolio", [{ t: "MSFT", lots: 20 }], ASSUMPTIONS_A, s);
+  savePortfolio("My Portfolio", [{ t: "AAPL", lots: 10 }], ASSUMPTIONS_A, "", s);
+  savePortfolio("My Portfolio", [{ t: "MSFT", lots: 20 }], ASSUMPTIONS_A, "", s);
   const saves = loadSaves(s);
   if (saves.length !== 1) fail(`Duplicate name should leave 1 entry, got ${saves.length}`);
   if (saves[0].holdings[0].t !== "MSFT") fail("Overwrite should replace holdings with the new value");
@@ -116,8 +116,8 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
 // ── 7. Delete removes only the intended portfolio ─────────────────────────────
 {
   const s = makeStorage();
-  savePortfolio("Keep Me", HOLDINGS_A, ASSUMPTIONS_A, s);
-  savePortfolio("Delete Me", [{ t: "VTI", lots: 50 }], ASSUMPTIONS_A, s);
+  savePortfolio("Keep Me", HOLDINGS_A, ASSUMPTIONS_A, "", s);
+  savePortfolio("Delete Me", [{ t: "VTI", lots: 50 }], ASSUMPTIONS_A, "", s);
   if (loadSaves(s).length !== 2) fail("Setup: expected 2 saves before delete");
   const r = deletePortfolio("Delete Me", s);
   if (!r.ok) fail(`deletePortfolio failed: ${r.error}`);
@@ -216,7 +216,7 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
 
   let result;
   try {
-    result = savePortfolio("New Name", HOLDINGS_A, ASSUMPTIONS_A, s);
+    result = savePortfolio("New Name", HOLDINGS_A, ASSUMPTIONS_A, "", s);
   } catch (e) {
     fail(`savePortfolio must not throw on storage error, but threw: ${e.message}`);
   }

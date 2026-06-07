@@ -825,10 +825,24 @@ and `extendedUniverseNote` warning until real history loads.
 
 **Acceptance:** `npm run test:universe` 46/46 pass. All 19 Node.js test suites pass. `npm run build` clean. ✓
 
-### 8f — Portfolio notes
+### 8f — Portfolio notes ✓
 
-Add a simple text area in the sidebar for the user to annotate the current portfolio
-(e.g., investment thesis, last-review date). Persist to `localStorage` with the portfolio name.
+Users can write a plain-text annotation in a compact sidebar block placed between the
+Saved Portfolios section and the Date Range section. The note is controlled by a
+`<textarea maxLength={500}>` with a live character counter and is persisted with the
+named saved portfolio — save/overwrite includes the note; load restores it; reset clears it.
+
+Old saved entries without a `notes` field load cleanly with `notes: ""` (no schema bump).
+The `notes` field is capped at 500 chars on both write (`savePortfolio`) and read (`validateEntry`).
+Malformed non-string values are coerced safely via `String(value ?? "")`.
+
+**Changes:** `src/portfolioStorage.js` — `savePortfolio` 4th param `notes`, `validateEntry` returns `notes`;
+`src/app.jsx` — `portfolioNote` state, wired into all four portfolio handlers and passed to Sidebar;
+`src/sidebar.jsx` — notes `sb-block` with controlled textarea, char counter, CSS;
+`src/ui.js` — EN+TR i18n keys (`portfolioNotes`, `portfolioNotesPlaceholder`, `portfolioNotesChars`);
+`scripts/notes-check.mjs` (35 tests); `scripts/portfolio-storage-check.mjs` — updated call sites for new signature.
+
+**Acceptance:** `npm run test:notes` 35/35 pass. All 20 Node.js test suites pass. `npm run build` clean. ✓
 
 ---
 

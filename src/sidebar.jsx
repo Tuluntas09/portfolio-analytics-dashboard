@@ -72,7 +72,8 @@ export function Sidebar(props) {
     profile, setProfile,
     assumptions, setAssumptions, theme, toggleTheme, language = "tr", toggleLanguage, lastUpdated,
     savedPortfolios = [], onSavePortfolio, onLoadPortfolio, onDeletePortfolio, onResetPortfolio,
-    onImportCsv, onExportCsv } = props;
+    onImportCsv, onExportCsv,
+    portfolioNote = "", setPortfolioNote } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
@@ -386,6 +387,19 @@ export function Sidebar(props) {
           </button>
         </div>
 
+        {/* ===== PORTFOLIO NOTES ===== */}
+        <div className="sb-block">
+          <label className="sb-label">{t(language, "portfolioNotes")}</label>
+          <textarea
+            className="note-area"
+            maxLength={500}
+            placeholder={t(language, "portfolioNotesPlaceholder")}
+            value={portfolioNote}
+            onChange={e => setPortfolioNote(e.target.value)}
+          />
+          <div className="note-counter">{portfolioNote.length} / 500 {t(language, "portfolioNotesChars")}</div>
+        </div>
+
         {/* ===== DATE RANGE ===== */}
         <div className="sb-block">
           <div className="sb-label-row">
@@ -654,6 +668,15 @@ export function Sidebar(props) {
           font-weight: 500; color: var(--text-faint); background: transparent;
           border: 1px dashed var(--border); }
         .reset-btn:hover { color: var(--text-dim); background: var(--panel); border-style: solid; }
+
+        /* portfolio notes */
+        .note-area { width: 100%; min-height: 72px; margin-top: 9px; padding: 8px 10px;
+          border-radius: 7px; border: 1px solid var(--border); background: var(--panel);
+          color: var(--text); font-size: 12px; line-height: 1.5; resize: vertical;
+          font-family: inherit; outline: none; box-sizing: border-box; }
+        .note-area::placeholder { color: var(--text-faint); }
+        .note-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+        .note-counter { font-size: 10px; color: var(--text-faint); text-align: right; margin-top: 4px; }
 
         /* extended universe */
         .extended-row { background: color-mix(in oklch, var(--warn), transparent 92%); }

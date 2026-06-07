@@ -108,6 +108,9 @@ export const I18N = {
     extendedUniverse: "Extended universe",
     extendedUniverseNote: "Mock data is synthetic until real history loads",
     addExtended: "Add as extended ticker",
+    portfolioNotes: "Portfolio notes",
+    portfolioNotesPlaceholder: "Investment thesis, last review, reminders…",
+    portfolioNotesChars: "chars",
   },
   tr: {
     language: "Dil",
@@ -187,6 +190,9 @@ export const I18N = {
     extendedUniverse: "Genişletilmiş evren",
     extendedUniverseNote: "Gerçek geçmiş yüklenene kadar model veri kullanılır",
     addExtended: "Genişletilmiş sembol ekle",
+    portfolioNotes: "Portföy notları",
+    portfolioNotesPlaceholder: "Yatırım tezi, son inceleme, notlar…",
+    portfolioNotesChars: "karakter",
   },
 };
 

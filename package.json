@@ -30,7 +30,8 @@
     "test:csv": "node scripts/csv-check.mjs",
     "test:export": "node scripts/export-check.mjs",
     "test:daterange": "node scripts/date-range-check.mjs",
-    "test:universe": "node scripts/universe-check.mjs"
+    "test:universe": "node scripts/universe-check.mjs",
+    "test:notes": "node scripts/notes-check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
