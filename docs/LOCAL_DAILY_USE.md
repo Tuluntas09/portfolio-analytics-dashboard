@@ -13,6 +13,26 @@ That's it. The launcher:
 2. Opens a terminal for the Vite frontend (port 8502)
 3. Opens `http://127.0.0.1:8502` in your default browser after a short delay
 
+### Optional: Create Desktop Shortcut
+
+To launch the dashboard from the Desktop without navigating to the project folder each time, create a shortcut using either method below.
+
+**Method A — PowerShell script (one command):**
+
+Open PowerShell in the project root and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\create-desktop-shortcut.ps1
+```
+
+This creates `Quant Portfolio Dashboard.lnk` on your Desktop pointing to `start-local-dashboard.bat`. If the shortcut already exists it is overwritten. No admin privileges required.
+
+**Method B — Right-click manually:**
+
+1. In File Explorer, navigate to the project folder.
+2. Right-click `start-local-dashboard.bat` → **Send to** → **Desktop (create shortcut)**.
+3. Optionally rename the resulting shortcut to `Quant Portfolio Dashboard`.
+
 **How to stop:** close both terminal windows.
 
 ---
