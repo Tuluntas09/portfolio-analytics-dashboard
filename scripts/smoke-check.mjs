@@ -91,7 +91,7 @@ if (empty.source.id !== "mock") fail("Empty portfolio should retain source metad
 
 const mixed = adapter.buildPortfolio([
   { t: "AAPL", lots: 10 },
-  { t: "UNKNOWN", lots: 5 },
+  { t: "bad ticker!", lots: 5 },
 ], { days: 252, profile: "balanced" });
 if (mixed.assets.length !== 1 || mixed.assets[0].t !== "AAPL") {
   fail("Unknown ticker filtering is broken");

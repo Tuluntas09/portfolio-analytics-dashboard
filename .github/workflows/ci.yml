@@ -51,6 +51,7 @@ jobs:
           npm run test:csv
           npm run test:export
           npm run test:daterange
+          npm run test:universe
 
       - name: Playwright E2E tests
         run: npm run test:e2e

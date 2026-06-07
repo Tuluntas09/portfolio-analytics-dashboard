@@ -60,6 +60,14 @@ const BENCH_DAILY_INCOME  = 0.0001;
 
 export function lookup(t) { return UNIVERSE.find(u => u.t === t); }
 
+// generic synthetic equity proxy — not calibrated; used only for extended-universe tickers when real history is unavailable
+export const DEFAULT_GBM = { px: 100, mu: 0.10, sig: 0.25 };
+
+export function isValidTicker(str) {
+  if (typeof str !== "string") return false;
+  return /^[A-Z0-9.]{1,8}$/.test(str.trim());
+}
+
 export const DATA_SOURCES = {
   mock: {
     id: "mock",
@@ -115,7 +123,7 @@ export function corr(a, b) {
 
 // --- generate a daily price path (geometric brownian-ish) ---
 function pricePath(ticker, days, seed) {
-  const u = lookup(ticker);
+  const u = lookup(ticker) || { ...DEFAULT_GBM, t: ticker };
   const r = rng(seed + ticker.split("").reduce((s, c) => s + c.charCodeAt(0), 0));
   const dt = 1 / 252;
   const out = [u.px / Math.exp(u.mu * (days / 252) * 0.6)]; // back out a start
@@ -216,7 +224,9 @@ export function buildPortfolio(holdings, opts = {}) {
   const source = DATA_SOURCES[sourceId] || DATA_SOURCES.mock;
 
   const assets = holdings.map(h => {
-    const u = lookup(h.t);
+    const u = lookup(h.t) || (isValidTicker(h.t)
+      ? { ...DEFAULT_GBM, t: h.t, name: h.t, cls: "Equity", sector: "Extended", extended: true }
+      : null);
     if (!u) return null;
     const realPath = historyPath(historyBySymbol[h.t], days);
     const liveQuote = quotePrice(quoteBySymbol[h.t]);

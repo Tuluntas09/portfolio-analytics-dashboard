@@ -810,12 +810,20 @@ in `src/dateUtils.js` for testability. New i18n keys: `customDateRange`, `dateRa
 
 **Acceptance:** `npm run test:daterange` 19/19 pass. All 18 Node.js test suites pass. `npm run build` clean. ✓
 
-### 8e — Instrument universe expansion
+### 8e — Instrument universe expansion ✓
 
-The current `UNIVERSE` has 15 instruments. Add a mechanism for the user to search
-for any ticker not in the list — the proxy already accepts arbitrary symbols.
-Mark user-added tickers as "extended universe" with a note that mock data
-(GBM parameters) will be synthetic until real history loads.
+The current `UNIVERSE` has 15 instruments. Users can now search for any valid ticker
+(1–8 uppercase alphanumeric/dot characters) not in the canonical list. The proxy
+already accepts arbitrary symbols; extended tickers receive synthetic GBM price paths
+(`DEFAULT_GBM = { px:100, mu:0.10, sig:0.25 }`) and are labeled with an EXT badge
+and `extendedUniverseNote` warning until real history loads.
+
+**Changes:** `src/data.js` — `DEFAULT_GBM`, `isValidTicker`, extended `buildPortfolio` null-guard;
+`src/app.jsx` — relaxed `addTicker` / `handleLoadPortfolio` / `handleImportCsv` validation;
+`src/sidebar.jsx` — crash guards, extended dropdown row, EXT badges, ext-note;
+`src/ui.js` — EN+TR i18n keys; `scripts/universe-check.mjs` (46 tests).
+
+**Acceptance:** `npm run test:universe` 46/46 pass. All 19 Node.js test suites pass. `npm run build` clean. ✓
 
 ### 8f — Portfolio notes
 

@@ -105,6 +105,9 @@ export const I18N = {
     dateRangeStartAfterEnd: "Start must be before end",
     dateRangeFutureEnd: "End date cannot be in the future",
     dateRangeTooShort: "Range must be at least 30 days",
+    extendedUniverse: "Extended universe",
+    extendedUniverseNote: "Mock data is synthetic until real history loads",
+    addExtended: "Add as extended ticker",
   },
   tr: {
     language: "Dil",
@@ -181,6 +184,9 @@ export const I18N = {
     dateRangeStartAfterEnd: "Başlangıç bitiş tarihinden önce olmalı",
     dateRangeFutureEnd: "Bitiş tarihi gelecekte olamaz",
     dateRangeTooShort: "Aralık en az 30 gün olmalı",
+    extendedUniverse: "Genişletilmiş evren",
+    extendedUniverseNote: "Gerçek geçmiş yüklenene kadar model veri kullanılır",
+    addExtended: "Genişletilmiş sembol ekle",
   },
 };
 

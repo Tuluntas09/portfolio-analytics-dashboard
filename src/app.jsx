@@ -17,7 +17,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
-import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE } from "./data.js";
+import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker } from "./data.js";
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry } from "./portfolioStorage.js";
 import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
 import { getDefaultCustomFrom, calendarToTradingDays } from "./dateUtils.js";
@@ -249,7 +249,7 @@ function App() {
   }, [p, assumptions.rf]);
 
   function addTicker(t) {
-    if (!dataAdapter.lookup(t)) return;
+    if (!isValidTicker(t)) return;
     setHoldings(h => h.find(x => x.t === t) ? h : [...h, { t, lots: 50 }]);
   }
   function removeTicker(t) { setHoldings(h => h.filter(x => x.t !== t)); }
@@ -261,8 +261,7 @@ function App() {
     return result;
   }
   function handleLoadPortfolio(entry) {
-    const validTickers = new Set(UNIVERSE.map(u => u.t));
-    const loaded = validateEntry(entry, validTickers);
+    const loaded = validateEntry(entry, { has: t => isValidTicker(t) });
     if (!loaded) return false;
     setHoldings(loaded.holdings);
     setAssumptions(loaded.assumptions);
@@ -278,8 +277,7 @@ function App() {
   }
 
   function handleImportCsv(csvText) {
-    const validTickers = new Set(UNIVERSE.map(u => u.t));
-    const result = parseHoldingsCsv(csvText, validTickers);
+    const result = parseHoldingsCsv(csvText, { has: t => isValidTicker(t) });
     if (result.importedCount > 0) setHoldings(result.holdings);
     return result;
   }

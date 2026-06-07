@@ -23,7 +23,7 @@
 
 import React from "react";
 import { t, fmtUSD } from "./ui.js";
-import { UNIVERSE, lookup } from "./data.js";
+import { UNIVERSE, lookup, isValidTicker } from "./data.js";
 import { validateDateRange } from "./dateUtils.js";
 
 const { useState: useStateSB, useRef: useRefSB, useEffect: useEffectSB } = React;
@@ -93,6 +93,8 @@ export function Sidebar(props) {
   const results = !q ? [] : universe.filter(u =>
     (u.t.toLowerCase().includes(q.toLowerCase()) || u.name.toLowerCase().includes(q.toLowerCase()))
   ).slice(0, 7);
+  const extTicker = q.trim().toUpperCase();
+  const showExtended = open && q.trim().length > 0 && isValidTicker(extTicker) && !held.has(extTicker) && !results.some(r => r.t === extTicker);
   const proxyLabel = !apiStatus?.checked
     ? t(language, "proxyChecking")
     : apiStatus.ok
@@ -206,7 +208,7 @@ export function Sidebar(props) {
                 }} />
               {q && <button className="clear-x" onClick={() => { setQ(""); setOpen(false); }}>×</button>}
             </div>
-            {open && results.length > 0 && (
+            {open && (results.length > 0 || showExtended) && (
               <div className="search-dd">
                 {results.map((u, i) => (
                   <button key={u.t} className={"dd-row" + (i === activeIdx ? " active" : "")}
@@ -218,9 +220,17 @@ export function Sidebar(props) {
                     {held.has(u.t) ? <span className="dd-added">{t(language, "added")}</span> : <Icon name="plus" size={13} color="var(--accent)" />}
                   </button>
                 ))}
+                {showExtended && (
+                  <button className="dd-row extended-row" onClick={() => add(extTicker)}>
+                    <span className="num dd-tkr">{extTicker}</span>
+                    <span className="dd-name">{t(language, "addExtended")}</span>
+                    <span className="dd-cls ext-badge">EXT</span>
+                    <Icon name="plus" size={13} color="var(--accent)" />
+                  </button>
+                )}
               </div>
             )}
-            {open && q && results.length === 0 && (
+            {open && q && results.length === 0 && !showExtended && (
               <div className="search-dd"><div className="dd-empty">{t(language, "noMatch")} "{q}"</div></div>
             )}
           </div>
@@ -237,11 +247,12 @@ export function Sidebar(props) {
             {holdings.map(h => {
               const u = lookupInstrument(h.t);
               const a = assets.find(x => x.t === h.t);
+              const isExt = !lookup(h.t);
               return (
-                <div key={h.t} className="hold-row">
+                <div key={h.t} className={"hold-row" + (isExt ? " extended-row" : "")}>
                   <div className="hold-main">
-                    <span className="num hold-tkr">{h.t}</span>
-                    <span className="hold-name">{u.name}</span>
+                    <span className="num hold-tkr">{h.t}{isExt && <span className="ext-badge">EXT</span>}</span>
+                    <span className="hold-name">{u?.name ?? t(language, "extendedUniverse")}</span>
                   </div>
                   <span className="num hold-wt">{a ? (a.weight * 100).toFixed(1) + "%" : "—"}</span>
                   <button className="hold-del" onClick={() => onRemove(h.t)} title={`${t(language, "remove")} ${h.t}`} aria-label={`${t(language, "remove")} ${h.t}`}>
@@ -264,19 +275,23 @@ export function Sidebar(props) {
               {holdings.map(h => {
                 const u = lookupInstrument(h.t);
                 const a = assets.find(x => x.t === h.t);
+                const isExt = !lookup(h.t);
                 return (
                   <div key={h.t} className="lot-row">
-                    <span className="num lot-tkr">{h.t}</span>
+                    <span className="num lot-tkr">{h.t}{isExt && <span className="ext-badge">EXT</span>}</span>
                     <div className="lot-input">
                       <input type="number" min="0" className="num" value={h.lots}
                         onChange={e => onLots(h.t, Math.max(0, parseInt(e.target.value || "0", 10)))} />
                     </div>
-                    <span className="num lot-px">@ ${u.px.toFixed(2)}</span>
+                    <span className="num lot-px">@ ${(a?.px ?? u?.px ?? 100).toFixed(2)}</span>
                     <span className="num lot-val">{a ? fmtUSD(a.value) : "—"}</span>
                   </div>
                 );
               })}
             </div>
+            {holdings.some(h => !lookup(h.t)) && (
+              <p className="ext-note">{t(language, "extendedUniverseNote")}</p>
+            )}
             <div className="lot-total">
               <span>{t(language, "portfolioValue")}</span>
               <span className="num">{fmtUSD(totalValue)}</span>
@@ -639,6 +654,16 @@ export function Sidebar(props) {
           font-weight: 500; color: var(--text-faint); background: transparent;
           border: 1px dashed var(--border); }
         .reset-btn:hover { color: var(--text-dim); background: var(--panel); border-style: solid; }
+
+        /* extended universe */
+        .extended-row { background: color-mix(in oklch, var(--warn), transparent 92%); }
+        .extended-row:hover { background: color-mix(in oklch, var(--warn), transparent 85%); }
+        .ext-badge { display: inline-block; font-size: 8.5px; font-weight: 700; letter-spacing: .05em;
+          color: var(--warn); border: 1px solid color-mix(in oklch, var(--warn), transparent 55%);
+          border-radius: 4px; padding: 0 4px; margin-left: 5px; vertical-align: middle; line-height: 1.6; }
+        .ext-note { font-size: 10px; color: var(--warn); margin-top: 8px; line-height: 1.4;
+          padding: 4px 8px; border-radius: 5px;
+          background: color-mix(in oklch, var(--warn), transparent 90%); }
       `}</style>
     </aside>
   );
