@@ -56,6 +56,7 @@ jobs:
           npm run test:costbasis
           npm run test:backup
           npm run test:snapshots
+          npm run test:activestate
 
       - name: Playwright E2E tests
         run: npm run test:e2e

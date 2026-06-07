@@ -134,6 +134,10 @@ export const I18N = {
     snapshotInception: "Since first session",
     snapshotNoHistory: "Not enough history yet",
     snapshotVs: "vs",
+    saveActiveState: "Save Current State",
+    activeStateSaved: "Current state saved",
+    activeStateLastSaved: "Last saved:",
+    activeStateNeverSaved: "Not saved yet",
   },
   tr: {
     language: "Dil",
@@ -238,6 +242,10 @@ export const I18N = {
     snapshotInception: "İlk oturumdan beri",
     snapshotNoHistory: "Henüz yeterli geçmiş yok",
     snapshotVs: "karşılaştırma",
+    saveActiveState: "Geçerli Durumu Kaydet",
+    activeStateSaved: "Geçerli durum kaydedildi",
+    activeStateLastSaved: "Son kayıt:",
+    activeStateNeverSaved: "Henüz kaydedilmedi",
   },
 };
 

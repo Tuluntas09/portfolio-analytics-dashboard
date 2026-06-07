@@ -75,7 +75,8 @@ export function Sidebar(props) {
     onImportCsv, onExportCsv,
     portfolioNote = "", setPortfolioNote,
     onCostBasis,
-    onExportBackup, onImportBackup } = props;
+    onExportBackup, onImportBackup,
+    onSaveActiveState, lastActiveSavedAt = null } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
@@ -88,6 +89,7 @@ export function Sidebar(props) {
   const csvInputRef = useRefSB(null);
   const [backupSummary, setBackupSummary] = useStateSB(null);
   const backupInputRef = useRefSB(null);
+  const [saveActiveFeedback, setSaveActiveFeedback] = useStateSB(false);
   const [draftFrom, setDraftFrom] = useStateSB(() => customFrom || "");
   const [draftTo, setDraftTo] = useStateSB(() => customTo || "");
   const [dateError, setDateError] = useStateSB(null);
@@ -128,6 +130,12 @@ export function Sidebar(props) {
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  useEffectSB(() => {
+    if (!saveActiveFeedback) return;
+    const tid = setTimeout(() => setSaveActiveFeedback(false), 2000);
+    return () => clearTimeout(tid);
+  }, [saveActiveFeedback]);
 
   function add(ticker) { if (!held.has(ticker)) onAdd(ticker); setQ(""); setOpen(false); }
 
@@ -417,6 +425,25 @@ export function Sidebar(props) {
               {backupSummary.message}
             </div>
           )}
+        </div>
+
+        {/* ===== SAVE CURRENT STATE ===== */}
+        <div className="sb-block">
+          <label className="sb-label">{t(language, "saveActiveState")}</label>
+          <button
+            className="save-active-btn"
+            onClick={() => { if (onSaveActiveState) { onSaveActiveState(); setSaveActiveFeedback(true); } }}
+          >
+            {t(language, "saveActiveState")}
+          </button>
+          <div className="save-active-status">
+            {saveActiveFeedback
+              ? t(language, "activeStateSaved")
+              : lastActiveSavedAt
+                ? `${t(language, "activeStateLastSaved")} ${new Date(lastActiveSavedAt).toLocaleString()}`
+                : t(language, "activeStateNeverSaved")
+            }
+          </div>
         </div>
 
         {/* ===== SAVED PORTFOLIOS ===== */}
@@ -772,6 +799,14 @@ export function Sidebar(props) {
         .note-area::placeholder { color: var(--text-faint); }
         .note-area:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
         .note-counter { font-size: 10px; color: var(--text-faint); text-align: right; margin-top: 4px; }
+
+        /* save current state */
+        .save-active-btn { width: 100%; margin-top: 9px; padding: 8px 0; border-radius: 7px;
+          font-size: 12px; font-weight: 600; color: white; background: var(--accent);
+          border: 1px solid color-mix(in oklch, var(--accent), transparent 30%); }
+        .save-active-btn:hover { filter: brightness(1.1); }
+        .save-active-status { margin-top: 6px; font-size: 10.5px; color: var(--text-faint);
+          line-height: 1.4; min-height: 16px; }
 
         /* extended universe */
         .extended-row { background: color-mix(in oklch, var(--warn), transparent 92%); }

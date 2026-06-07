@@ -21,6 +21,7 @@ import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicke
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY } from "./portfolioStorage.js";
 import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
 import { loadSnapshots, recordSnapshot, calcDeltas, exportSnapshots, importSnapshots } from "./portfolioSnapshots.js";
+import { saveActiveState, loadActiveState } from "./activePortfolioState.js";
 import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
 import { getDefaultCustomFrom, calendarToTradingDays } from "./dateUtils.js";
 import { fmtUSD, fmtPctSigned, fmtNum, fmtPct, t } from "./ui.js";
@@ -59,13 +60,18 @@ function App() {
   const dataAdapter = ACTIVE_DATA_ADAPTER;
   const [theme, setTheme] = useState(() => localStorage.getItem("qpa-theme") || "dark");
   const [language, setLanguage] = useState(() => localStorage.getItem("qpa-language") || "tr");
-  const [holdings, setHoldings] = useState(() =>
-    Object.entries(DEFAULT_LOTS).map(([t, lots]) => ({ t, lots })));
+  const [holdings, setHoldings] = useState(() => {
+    const saved = loadActiveState();
+    return saved ? saved.holdings : Object.entries(DEFAULT_LOTS).map(([t, lots]) => ({ t, lots }));
+  });
   const [dateRange, setDateRange] = useState("2Y");
   const [customFrom, setCustomFrom] = useState(getDefaultCustomFrom);
   const [customTo, setCustomTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [profile, setProfile] = useState("balanced");
-  const [assumptions, setAssumptions] = useState({ rf: 0.043, horizon: 5, paths: 2000 });
+  const [assumptions, setAssumptions] = useState(() => {
+    const saved = loadActiveState();
+    return saved ? saved.assumptions : { rf: 0.043, horizon: 5, paths: 2000 };
+  });
   const [tab, setTab] = useState("overview");
   const [apiStatus, setApiStatus] = useState({
     checked: false,
@@ -90,8 +96,15 @@ function App() {
     requested: 0,
   });
   const [savedPortfolios, setSavedPortfolios] = useState(() => loadSaves());
-  const [portfolioNote, setPortfolioNote] = useState("");
+  const [portfolioNote, setPortfolioNote] = useState(() => {
+    const saved = loadActiveState();
+    return saved ? saved.notes : "";
+  });
   const [snapshots, setSnapshots] = useState(() => loadSnapshots());
+  const [lastActiveSavedAt, setLastActiveSavedAt] = useState(() => {
+    const saved = loadActiveState();
+    return saved ? saved.savedAt : null;
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -361,8 +374,15 @@ function App() {
         importSnapshots(result.snapshots);
         setSnapshots(loadSnapshots());
       }
+      const saveResult = saveActiveState(result.current.holdings, result.current.assumptions, result.current.notes);
+      if (saveResult.ok) setLastActiveSavedAt(saveResult.savedAt);
     }
     return result;
+  }
+
+  function handleSaveActiveState() {
+    const result = saveActiveState(holdings, assumptions, portfolioNote);
+    if (result.ok) setLastActiveSavedAt(result.savedAt);
   }
 
   function handlePrintReport() {
@@ -406,7 +426,9 @@ function App() {
         setPortfolioNote={setPortfolioNote}
         onCostBasis={setCostBasis}
         onExportBackup={handleExportBackup}
-        onImportBackup={handleImportBackup} />
+        onImportBackup={handleImportBackup}
+        onSaveActiveState={handleSaveActiveState}
+        lastActiveSavedAt={lastActiveSavedAt} />
 
       <main className="main">
         {/* top bar */}

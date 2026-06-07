@@ -175,6 +175,25 @@ Change `8502` to any free port. Update the URL you open in the browser according
 
 ---
 
+## Saving Your Portfolio State
+
+Your holdings, position lots, cost basis, assumptions, and notes are **not** automatically saved when you edit them. To persist the current dashboard state across browser refreshes and new sessions, click **Save Current State** in the sidebar.
+
+| What it saves | Where it is stored |
+|---|---|
+| Holdings (tickers + lots) | `localStorage` key `qpa-active-state` |
+| Avg. cost and first-bought date per holding | Same key |
+| Risk-free rate, MC horizon, MC paths | Same key |
+| Portfolio notes (up to 500 chars) | Same key |
+
+**When state is restored:** The next time the dashboard loads, it reads `qpa-active-state` and pre-fills all the above fields. If the key is missing or corrupt, defaults are used instead.
+
+**JSON import auto-saves:** Restoring a backup via *Import JSON* also saves the imported state immediately, so a page refresh after import does not lose the imported portfolio.
+
+**Reset to default:** Clicking *Reset to default* in the sidebar resets the in-memory state but does **not** delete `qpa-active-state`. The next page load will restore from the last explicit save — unless you click *Save Current State* again after resetting, which would overwrite the saved state with the default holdings.
+
+---
+
 ## Mock/Offline Mode
 
 To run without the proxy or an API key (synthetic data only):

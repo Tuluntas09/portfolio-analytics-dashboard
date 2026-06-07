@@ -949,6 +949,28 @@ implemented, tested, and documented. The repository is tagged at `v2.0.0`.
 
 **Acceptance:** `npm run test:snapshots` passes (48 tests). All 23 Node.js test suites pass. `npm run build` clean. ✓
 
+### 10b — Explicit Active Portfolio Save ✓ *Completed 2026-06-07*
+
+**Motivation:** All working state (holdings, lots, avgCost, firstBought, assumptions, notes) was initialized from hard-coded defaults on every app load. Refreshing the browser or opening a new tab lost all edits made in the session. Phase 10b adds explicit "Save Current State" persistence backed by localStorage, allowing users to resume where they left off without relying on Saved Portfolios for every change.
+
+**What was added:**
+
+- `src\activePortfolioState.js` (new): Standalone pure module (no React). Exports `ACTIVE_STATE_KEY = "qpa-active-state"`, `ACTIVE_STATE_VERSION = 1`, `saveActiveState(holdings, assumptions, notes, storage?)`, `loadActiveState(storage?)`, `clearActiveState(storage?)`. Injectable storage parameter for Node.js testability. `saveActiveState` validates and sanitizes holdings (ticker format, finite lots ≥ 0, optional avgCost/firstBought), caps notes at 500 chars, stores `schemaVersion: 1` + `savedAt` ISO timestamp. `loadActiveState` validates schemaVersion, filters invalid holdings silently, returns typed object or null. `clearActiveState` removes the key.
+
+- `src\app.jsx`: Holdings, assumptions, and portfolioNote `useState` initializers now call `loadActiveState()` on first render — falls back to `DEFAULT_LOTS` defaults if no saved state exists. `lastActiveSavedAt` state tracks last save timestamp. `handleSaveActiveState()` calls `saveActiveState` and updates `lastActiveSavedAt` on success. `handleImportBackup` auto-calls `saveActiveState` after a successful JSON import, preventing the "import → refresh → lost" regression. Both `onSaveActiveState` and `lastActiveSavedAt` passed to Sidebar.
+
+- `src\sidebar.jsx`: "Save Current State" block added between JSON Backup and Saved Portfolios sections. Full-width accent button (`.save-active-btn`). 2-second feedback flash (`activeStateSaved`) on success using `saveActiveFeedback` state + `useEffectSB` timeout (variable named `tid` to avoid shadowing imported `t` function). Status line (`.save-active-status`) shows last-saved timestamp or "Not saved yet".
+
+- `src\ui.js`: Four new bilingual keys (EN + TR): `saveActiveState`, `activeStateSaved`, `activeStateLastSaved`, `activeStateNeverSaved`. Full EN/TR parity maintained.
+
+- `scripts\active-state-check.mjs` (new): 56 tests covering constants, source-text safety (no FINNHUB, no advisory language), `saveActiveState` (serialization, filtering, sanitization), `loadActiveState` (null, malformed JSON, wrong schemaVersion, invalid assumptions, round-trip), `clearActiveState`, and integration checks across `app.jsx`, `sidebar.jsx`, and `ui.js`. `package.json`: `"test:activestate"` added. `.github/workflows/ci.yml`: `npm run test:activestate` added (24th Node.js test suite).
+
+**Language constraints preserved:** No buy/sell signals. No target prices. No advisory language. All new strings are purely operational ("Save Current State", "Last saved:", "Not saved yet").
+
+**Security constraints preserved:** `FINNHUB_API_KEY` untouched. No new env vars. No new npm dependencies. No proxy changes. No CSV format changes. No financial formula changes.
+
+**Acceptance:** `npm run test:activestate` passes (56 tests). All 24 Node.js test suites pass. `npm run build` clean. ✓
+
 ---
 
 ## Dependency Budget
