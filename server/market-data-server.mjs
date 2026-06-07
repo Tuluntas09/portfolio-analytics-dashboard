@@ -412,8 +412,11 @@ export {
 };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const port = Number(process.env.MARKET_DATA_PORT || 8787);
-  createMarketDataServer().listen(port, "127.0.0.1", () => {
-    console.log(`Market data proxy listening on http://127.0.0.1:${port}`);
+  // MARKET_DATA_PORT / PORT: override for public hosts (Render, Railway, Fly.io set PORT automatically).
+  // MARKET_DATA_HOST: set to 0.0.0.0 for public deployment; defaults to 127.0.0.1 for local safety.
+  const port = Number(process.env.MARKET_DATA_PORT || process.env.PORT || 8787);
+  const host = process.env.MARKET_DATA_HOST || "127.0.0.1";
+  createMarketDataServer().listen(port, host, () => {
+    console.log(`Market data proxy listening on http://${host}:${port}`);
   });
 }

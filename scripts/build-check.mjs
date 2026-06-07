@@ -16,8 +16,10 @@
  *   9.  At least one compiled .js asset exists in dist/assets/
  *   10. No .jsx files exist anywhere in dist/
  *   11. dist/legacy/ directory does NOT exist (legacy files excluded from build)
- *   12. Raw JS bundle size is under 400 kB
- *   13. Gzip JS bundle size is under 150 kB
+ *   12. VITE_FINNHUB_API_KEY is NOT present in the JS bundle
+ *   13. Default proxy URL (127.0.0.1:8787) IS present in the JS bundle as the VITE_API_BASE_URL fallback
+ *   14. Raw JS bundle size is under 400 kB
+ *   15. Gzip JS bundle size is under 150 kB
  */
 
 import fs   from "node:fs";
@@ -136,7 +138,25 @@ if (fs.existsSync(legacyInDist)) {
   pass("dist/legacy/ does not exist");
 }
 
-// ── 12–13. Bundle size ceilings ─────────────────────────────────────────────
+// ── 12. Bundle secret / env-var checks ──────────────────────────────────────
+header("JS bundle — secret and env-var checks");
+const jsBundleContent = fs.readFileSync(path.join(assetsDir, jsFiles[0]), "utf8");
+
+// VITE_FINNHUB_API_KEY must never appear — it would expose the API key to the browser.
+if (jsBundleContent.includes("VITE_FINNHUB_API_KEY")) {
+  fail("VITE_FINNHUB_API_KEY found in JS bundle — this would expose the Finnhub key to the browser");
+} else {
+  pass("VITE_FINNHUB_API_KEY — not present in JS bundle");
+}
+
+// The default localhost proxy URL must be present as the fallback value.
+if (jsBundleContent.includes("127.0.0.1:8787")) {
+  pass("default proxy URL (127.0.0.1:8787) present in JS bundle as fallback");
+} else {
+  fail("default proxy URL (127.0.0.1:8787) missing from JS bundle — VITE_API_BASE_URL fallback may be broken");
+}
+
+// ── 13–14. Bundle size ceilings ─────────────────────────────────────────────
 header("Bundle size ceilings");
 const jsBundlePath = path.join(assetsDir, jsFiles[0]);
 const rawBytes  = fs.statSync(jsBundlePath).size;

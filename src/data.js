@@ -68,6 +68,11 @@ export function isValidTicker(str) {
   return /^[A-Z0-9.]{1,8}$/.test(str.trim());
 }
 
+// VITE_API_BASE_URL: optional build-time variable pointing at a deployed proxy.
+// Falls back to localhost for local development (Mode B).
+// Never set VITE_FINNHUB_API_KEY — the key must stay server-side only.
+const _PROXY_BASE_URL = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8787";
+
 export const DATA_SOURCES = {
   mock: {
     id: "mock",
@@ -88,7 +93,7 @@ export const DATA_SOURCES = {
     companyProvider: "Finnhub profile2 via local proxy",
     newsProvider: "Finnhub company news via local proxy",
     lastUpdated: "Runtime API",
-    baseUrl: "http://127.0.0.1:8787",
+    baseUrl: _PROXY_BASE_URL,
   },
 };
 
