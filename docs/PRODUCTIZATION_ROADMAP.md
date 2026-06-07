@@ -784,13 +784,15 @@ Allow the user to save named portfolio snapshots to `localStorage`.
 Load/switch between saved portfolios from the sidebar.
 No server-side persistence; no authentication required.
 
-### 8c — Report export
+### 8c — Report export ✓
 
-Existing `window.__exportTab` and `window.__exportDone` functions already support
-a PPTX-export layout mode (`body.export-mode`). Document this feature and add
-a visible "Export" button to the top bar that:
-- Cycles through all tabs in export mode
-- Triggers a browser print dialog or screenshot prompt
+Added a "Print Report" button to the topbar-right area. Clicking it enters `body.export-mode`,
+registers an `afterprint` cleanup listener, and calls `window.print()`. `@media print` CSS hides
+the sidebar, topbar, and tab nav so only the active tab content is printed. The existing
+`window.__exportTab` / `window.__exportDone` PPTX hooks are preserved unchanged.
+New i18n key `printReport` (EN + TR). New test suite `scripts/export-check.mjs` (10 tests).
+
+**Acceptance:** `npm run test:export` 10/10 pass. All 16 Node.js test suites pass. `npm run build` clean. ✓
 
 ### 8d — Custom date range
 

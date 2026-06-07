@@ -49,6 +49,7 @@ jobs:
           npm run test:app
           npm run test:portfolios
           npm run test:csv
+          npm run test:export
 
       - name: Playwright E2E tests
         run: npm run test:e2e

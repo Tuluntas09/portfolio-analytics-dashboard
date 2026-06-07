@@ -99,6 +99,7 @@ export const I18N = {
     csvNoValidRows: "No valid rows found",
     csvReadError: "Could not read file",
     csvUnsupported: "Unsupported:",
+    printReport: "Print Report",
   },
   tr: {
     language: "Dil",
@@ -169,6 +170,7 @@ export const I18N = {
     csvNoValidRows: "Geçerli satır bulunamadı",
     csvReadError: "Dosya okunamadı",
     csvUnsupported: "Desteklenmiyor:",
+    printReport: "Raporu Yazdır",
   },
 };
 

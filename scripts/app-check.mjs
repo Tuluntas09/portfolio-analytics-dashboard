@@ -205,7 +205,7 @@ const src = fs.readFileSync(appPath, "utf8");
   // The only remaining window.* should be inside the export helpers themselves
   // (window.scrollTo, document.body — those are DOM APIs not window global reads)
   const windowConsumers = withoutExports.match(/\bwindow\.\w+/g) || [];
-  const allowedPatterns = ["window.scrollTo", "window.__exportTab", "window.__exportDone"];
+  const allowedPatterns = ["window.scrollTo", "window.__exportTab", "window.__exportDone", "window.print"];
   const illegal = windowConsumers.filter(w => !allowedPatterns.some(a => w.startsWith(a.split("(")[0])));
   if (illegal.length > 0) {
     fail(`src/app.jsx has unexpected window.* references: ${illegal.join(", ")}`);

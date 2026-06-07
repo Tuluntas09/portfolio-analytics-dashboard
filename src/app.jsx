@@ -286,6 +286,12 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
+  function handlePrintReport() {
+    document.body.classList.add("export-mode");
+    addEventListener("afterprint", () => document.body.classList.remove("export-mode"), { once: true });
+    window.print();
+  }
+
   const empty = holdings.length === 0;
   const tabLabel = id => {
     const found = TABS.find(t => t.id === id);
@@ -347,6 +353,7 @@ function App() {
               <span className="eyebrow">{t(language, "maxDd")}</span>
               <span className="num" style={{ color: "var(--neg)" }}>{fmtPct(pAdj.mdd)}</span>
             </div>
+            <button className="print-btn" onClick={handlePrintReport}>{t(language, "printReport")}</button>
           </div>
         </header>
 
@@ -396,10 +403,23 @@ function App() {
         .topbar-title h1 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
         .topbar-sub { display: flex; align-items: center; gap: 9px; margin-top: 6px; font-size: 12px; color: var(--text-dim); }
         .dot-sep { width: 3px; height: 3px; border-radius: 99px; background: var(--text-faint); }
-        .topbar-right { display: flex; gap: 8px; }
+        .topbar-right { display: flex; gap: 8px; align-items: center; }
         .head-metric { display: flex; flex-direction: column; gap: 3px; padding: 7px 14px; min-width: 84px;
           background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--r-md); }
         .head-metric .num { font-size: 15px; font-weight: 700; }
+        .print-btn { padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--text-dim);
+          background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--r-md);
+          cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s; }
+        .print-btn:hover { color: var(--text); border-color: var(--border); }
+        body.export-mode .print-btn { display: none; }
+        @media print {
+          .sidebar { display: none !important; }
+          .topbar { display: none !important; }
+          .tabnav { display: none !important; }
+          .app { display: block; height: auto; overflow: visible; }
+          .main { overflow: visible; }
+          .content { overflow: visible; padding: 12px; }
+        }
 
         .tabnav { display: flex; gap: 2px; padding: 0 22px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
         .tab-btn { padding: 11px 14px; font-size: 13px; font-weight: 500; color: var(--text-faint);
