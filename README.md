@@ -163,6 +163,10 @@ npm run dev
 
 **Mock/offline mode** — skip steps 3 and 4. The dashboard runs fully on the deterministic mock engine with no external calls.
 
+### Daily Local Use (Windows)
+
+After first-time setup, double-click **`start-local-dashboard.bat`** in the project folder. It opens the proxy terminal, the frontend terminal, and the browser automatically. See [docs/LOCAL_DAILY_USE.md](./docs/LOCAL_DAILY_USE.md) for the full guide including status indicators, troubleshooting, and port configuration.
+
 ---
 
 ## Environment Variables
