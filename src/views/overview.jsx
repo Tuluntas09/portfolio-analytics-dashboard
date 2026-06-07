@@ -24,7 +24,7 @@
 /* @jsxFrag React.Fragment */
 
 import React from "react";
-import { assetColor, fmtUSD, fmtUSDSigned, fmtPct, fmtPctSigned, fmtNum, fmtUSDc } from "../ui.js";
+import { assetColor, fmtUSD, fmtUSDSigned, fmtPct, fmtPctSigned, fmtNum, fmtUSDc, t } from "../ui.js";
 import { Metric, Card, Pill, Table, Alert, ModuleIntro, InsightGrid, InsightCard } from "../ui.jsx";
 import { GrowthChart, Donut, Heatmap, HBars, MiniLine } from "../charts.jsx";
 import { corr, GLOSSARY } from "../data.js";
@@ -190,7 +190,7 @@ export function dataProviderTone(provider) {
   return "neutral";
 }
 
-export function OverviewTab({ p, language = "tr" }) {
+export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas = null }) {
   const copy = RISK_COPY[language] || RISK_COPY.tr;
   const allocation = p.assets.map((a, i) => ({
     label: a.t,
@@ -225,6 +225,37 @@ export function OverviewTab({ p, language = "tr" }) {
             <Metric label={copy.unrealizedReturn} value={fmtPctSigned(p.totalUnrealizedPct)} accent={p.totalUnrealizedPct >= 0 ? "var(--pos)" : "var(--neg)"} />
           </div>
         </div>
+      )}
+
+      {snapshots.length >= 2 && (
+        <Card title={t(language, "snapshotHistory")} subtitle={t(language, "snapshotHistoryHelp")}>
+          {snapshotDeltas && (snapshotDeltas.wow || snapshotDeltas.mom || snapshotDeltas.ytd || snapshotDeltas.inception) && (
+            <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+              {[
+                { key: "wow", label: t(language, "snapshotWow") },
+                { key: "mom", label: t(language, "snapshotMom") },
+                { key: "ytd", label: t(language, "snapshotYtd") },
+                { key: "inception", label: t(language, "snapshotInception") },
+              ].map(({ key, label }) => {
+                const d = snapshotDeltas[key];
+                if (!d) return null;
+                return (
+                  <div key={key} style={{ background: "var(--panel-hi)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-md)", padding: "10px 16px", minWidth: 110 }}>
+                    <div style={{ fontSize: 11, color: "var(--text-faint)", fontWeight: 500, marginBottom: 4 }}>{label}</div>
+                    <div className="num" style={{ fontSize: 15, fontWeight: 700, color: d.pct >= 0 ? "var(--pos)" : "var(--neg)" }}>{fmtPctSigned(d.pct)}</div>
+                    <div className="num" style={{ fontSize: 11, color: "var(--text-dim)" }}>{fmtUSDSigned(d.value)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <MiniLine
+            data={snapshots.map(s => s.totalValue)}
+            height={120}
+            color="var(--accent)"
+            fmt={v => "$" + (v >= 1000 ? (v / 1000).toFixed(0) + "k" : v.toFixed(0))}
+          />
+        </Card>
       )}
 
       <div className="grid-2-1">

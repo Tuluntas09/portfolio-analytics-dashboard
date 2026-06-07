@@ -20,6 +20,7 @@ import { createRoot } from "react-dom/client";
 import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker } from "./data.js";
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY } from "./portfolioStorage.js";
 import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
+import { loadSnapshots, recordSnapshot, calcDeltas, exportSnapshots, importSnapshots } from "./portfolioSnapshots.js";
 import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
 import { getDefaultCustomFrom, calendarToTradingDays } from "./dateUtils.js";
 import { fmtUSD, fmtPctSigned, fmtNum, fmtPct, t } from "./ui.js";
@@ -90,6 +91,7 @@ function App() {
   });
   const [savedPortfolios, setSavedPortfolios] = useState(() => loadSaves());
   const [portfolioNote, setPortfolioNote] = useState("");
+  const [snapshots, setSnapshots] = useState(() => loadSnapshots());
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -250,6 +252,19 @@ function App() {
     return { ...p, rf: assumptions.rf, sharpe, sortino };
   }, [p, assumptions.rf]);
 
+  useEffect(() => {
+    if (pAdj.source?.id !== "real") return;
+    if (marketDataStatus.status !== "ready") return;
+    if (typeof pAdj.totalValue !== "number" || !Number.isFinite(pAdj.totalValue) || pAdj.totalValue <= 0) return;
+    const result = recordSnapshot(pAdj.totalValue, "real");
+    if (result.ok) setSnapshots(loadSnapshots());
+  }, [pAdj.source?.id, pAdj.totalValue, marketDataStatus.status]);
+
+  const snapshotDeltas = useMemo(
+    () => calcDeltas(snapshots, pAdj.totalValue),
+    [snapshots, pAdj.totalValue]
+  );
+
   function addTicker(t) {
     if (!isValidTicker(t)) return;
     setHoldings(h => h.find(x => x.t === t) ? h : [...h, { t, lots: 50 }]);
@@ -315,7 +330,7 @@ function App() {
   }
 
   function handleExportBackup() {
-    const payload = exportBackup(holdings, assumptions, portfolioNote, savedPortfolios);
+    const payload = exportBackup(holdings, assumptions, portfolioNote, savedPortfolios, exportSnapshots());
     const text = JSON.stringify(payload, null, 2);
     const blob = new Blob([text], { type: "application/json;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -342,6 +357,10 @@ function App() {
       setPortfolioNote(result.current.notes);
       setSavedPortfolios(result.savedPortfolios);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(result.savedPortfolios));
+      if (Array.isArray(result.snapshots) && result.snapshots.length > 0) {
+        importSnapshots(result.snapshots);
+        setSnapshots(loadSnapshots());
+      }
     }
     return result;
   }
@@ -449,7 +468,7 @@ function App() {
             </div>
           ) : (
             <>
-              {tab === "overview" && <OverviewTab p={pAdj} language={language} />}
+              {tab === "overview" && <OverviewTab p={pAdj} language={language} snapshots={snapshots} snapshotDeltas={snapshotDeltas} />}
               {tab === "risk" && <RiskTab p={pAdj} language={language} />}
               {tab === "analysis" && <AnalysisTab p={pAdj} language={language} />}
               {tab === "optimization" && <OptimizationTab p={pAdj} language={language} />}

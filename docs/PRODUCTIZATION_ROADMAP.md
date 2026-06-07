@@ -921,6 +921,36 @@ implemented, tested, and documented. The repository is tagged at `v2.0.0`.
 
 ---
 
+## Phase 10 — Advanced Personal Risk Dashboard
+
+### 10a — Portfolio Daily Snapshots ✓ *Completed 2026-06-07*
+
+**Motivation:** The dashboard previously showed only the current portfolio state. After a bull or bear week, there is no record of where the portfolio stood. Daily snapshots capture live-session portfolio values, making it possible to see value history over time and measure WoW, MoM, YTD, and inception-to-date performance.
+
+**Recording policy:** Only records when `pAdj.source.id === "real"` (live Finnhub data) and market data is fully loaded (`marketDataStatus.status === "ready"`). Mock-data sessions are never recorded. Same calendar day is overwritten idempotently. Maximum 365 snapshots stored (oldest pruned first). Storage key: `qpa-snapshots` in localStorage.
+
+**What was added:**
+
+- `src/portfolioSnapshots.js` (new, standalone): exports `SNAPSHOT_VERSION`, `SNAPSHOT_KEY`, `MAX_SNAPSHOTS`, `todayIso`, `normalizeSnapshot`, `loadSnapshots`, `recordSnapshot`, `getLatestSnapshot`, `exportSnapshots`, `importSnapshots`, `calcDeltas`. No React imports; injectable storage parameter enables Node.js testing. `calcDeltas` computes WoW (±3d tolerance), MoM (±5d tolerance), YTD (closest to Jan 1), and inception (oldest past snapshot). All use live `pAdj.totalValue` — not latest stored snapshot — for the "today" side. Inception returns `null` on first day to avoid a meaningless 0%.
+
+- `src/portfolioBackup.js`: `exportBackup` extended with optional `snapshots = []` parameter; payload now includes `snapshots` field. `importBackup` returns `snapshots: raw.snapshots ?? []` for backward compatibility with old backups that have no `snapshots` field.
+
+- `src/ui.js`: Eight new bilingual keys (EN + TR): `snapshotHistory`, `snapshotHistoryHelp`, `snapshotWow`, `snapshotMom`, `snapshotYtd`, `snapshotInception`, `snapshotNoHistory`, `snapshotVs`. Full EN/TR parity maintained.
+
+- `src/app.jsx`: Imports `loadSnapshots`, `recordSnapshot`, `calcDeltas`, `exportSnapshots`, `importSnapshots` from `./portfolioSnapshots.js`. `snapshots` state initialized from `loadSnapshots()`. Recording `useEffect` fires when source is `"real"` and `marketDataStatus.status === "ready"`. `snapshotDeltas` useMemo computed from `calcDeltas(snapshots, pAdj.totalValue)`. `handleExportBackup` passes `exportSnapshots()` as 5th arg. `handleImportBackup` calls `importSnapshots(result.snapshots)` and refreshes state when backup includes snapshots. `OverviewTab` receives `snapshots` and `snapshotDeltas` props.
+
+- `src/views/overview.jsx`: `OverviewTab` accepts `snapshots = []` and `snapshotDeltas = null`. When `snapshots.length >= 2`, a "Portfolio value history" Card is rendered above the cumulative return chart containing: a delta KPI strip (WoW / Month / YTD / Since first session, shown only for non-null deltas) and a `MiniLine` history chart. All strings come from `t(language, key)` via `src/ui.js` I18N.
+
+- `scripts/snapshot-check.mjs` (new): 48+ tests covering constants, `todayIso`, `normalizeSnapshot`, `loadSnapshots`, `recordSnapshot`, `getLatestSnapshot`, `exportSnapshots`, `importSnapshots`, `calcDeltas`, source-text checks, and backup integration. `package.json`: `"test:snapshots"` added. `.github/workflows/ci.yml`: `npm run test:snapshots` added (23rd Node.js test suite).
+
+**Language constraints preserved:** No buy/sell signals. No target prices. No future return predictions. No advisory language. All strings are purely observational ("Portfolio value history", "Since first session").
+
+**Security constraints preserved:** `FINNHUB_API_KEY` untouched. No new env vars. No new npm dependencies. No proxy changes. No CSV format changes. No formula changes.
+
+**Acceptance:** `npm run test:snapshots` passes (48 tests). All 23 Node.js test suites pass. `npm run build` clean. ✓
+
+---
+
 ## Dependency Budget
 
 To remain suitable for GitHub portfolio display and easy setup, the project should

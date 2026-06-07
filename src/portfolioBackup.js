@@ -19,10 +19,11 @@ export const BACKUP_VERSION = 1;
  * Builds the full-state backup payload as a plain JS object.
  * The caller must JSON.stringify it and trigger the download.
  */
-export function exportBackup(holdings, assumptions, notes, savedPortfolios) {
+export function exportBackup(holdings, assumptions, notes, savedPortfolios, snapshots = []) {
   return {
     backupVersion: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
+    snapshots: Array.isArray(snapshots) ? snapshots : [],
     current: {
       holdings: Array.isArray(holdings) ? holdings.map(h => {
         const out = { t: String(h.t), lots: Number(h.lots) };
@@ -118,6 +119,7 @@ export function importBackup(raw, validTickers) {
       notes: String(raw.current.notes ?? "").slice(0, 500),
     },
     savedPortfolios,
+    snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [],
   };
 }
 
