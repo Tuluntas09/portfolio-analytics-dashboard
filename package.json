@@ -31,7 +31,8 @@
     "test:export": "node scripts/export-check.mjs",
     "test:daterange": "node scripts/date-range-check.mjs",
     "test:universe": "node scripts/universe-check.mjs",
-    "test:notes": "node scripts/notes-check.mjs"
+    "test:notes": "node scripts/notes-check.mjs",
+    "test:costbasis": "node scripts/cost-basis-check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

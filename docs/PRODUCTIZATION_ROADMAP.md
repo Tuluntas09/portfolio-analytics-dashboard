@@ -865,6 +865,40 @@ implemented, tested, and documented. The repository is tagged at `v2.0.0`.
 
 ---
 
+## Phase 9 — Daily-Use Personal Analytics
+
+**Goal:** Evolve the dashboard from a GitHub portfolio showcase into a tool the owner uses daily — personal performance tracking, cost basis monitoring, and eventually live data.
+
+### 9a — Cost Basis & Unrealized P&L Foundation ✓ *Completed 2026-06-07*
+
+**Motivation:** Without cost basis, the dashboard shows only market performance, not personal performance. Unrealized P&L is the most fundamental personal finance metric — the difference between what was paid and what it is worth now.
+
+**Holdings model extended:** `{ t, lots, avgCost?, firstBought? }`. Both fields are optional, backward-compatible, and validated/stripped on storage write and load.
+
+**What was added:**
+
+- `src/data.js`: Per-asset `avgCost`, `firstBought`, `unrealizedPnl` (= `(px - avgCost) × lots`), `unrealizedPct` (= `(px - avgCost) / avgCost`) added to `buildPortfolio` asset objects. Portfolio-level `totalCostBasis`, `totalUnrealizedPnl`, `totalUnrealizedPct` aggregated over assets that have cost basis data. All three added as `null` to `emptyPortfolio()`. Assets without `avgCost` contribute nothing to the portfolio aggregate.
+
+- `src/ui.js`: `fmtUSDSigned` formatter added. Six new bilingual i18n keys (EN + TR): `averageCost`, `firstBought`, `unrealizedPnl`, `unrealizedReturn`, `costBasis`, `missingCostBasis`. Full EN/TR parity maintained.
+
+- `src/portfolioStorage.js`: `savePortfolio` conditionally serializes `avgCost` (positive finite number) and `firstBought` (YYYY-MM-DD string) per holding. `validateEntry` passes them through on load with the same validation guards. Old saves without these fields load cleanly (fields absent = no cost basis).
+
+- `src/sidebar.jsx`: Lot entry section extended with a compact cost-basis row below each lot-input row. Inputs: `avgCost` (number, min 0, step 0.01) and `firstBought` (date, max today). Calls `onCostBasis(ticker, { avgCost })` or `onCostBasis(ticker, { firstBought })` on change. Clears the field (deletes the key) when the input is empty. New CSS classes: `.lot-item`, `.lot-cost-row`, `.lot-cost-lbl`, `.lot-cost-input`, `.lot-date-input`.
+
+- `src/app.jsx`: `setCostBasis(ticker, fields)` handler merges partial updates into the relevant holding. Passed as `onCostBasis={setCostBasis}` to Sidebar. `handleLoadPortfolio` automatically restores cost basis from saved state via the updated `validateEntry`.
+
+- `src/views/overview.jsx`: `fmtUSDSigned` imported. Four keys added to local `RISK_COPY` (EN + TR): `averageCost`, `unrealizedPnl`, `unrealizedReturn`, `costBasis`. Holdings detail table extended with three new columns: Avg. Cost, Unrealized P&L, Unrealized Return — all showing `—` when no cost basis is set. Conditional portfolio-level P&L strip (3 metrics: Cost Basis / Unrealized P&L / Unrealized Return) inserted between the kpi-strip and the cumulative-return chart, visible only when `p.totalUnrealizedPnl != null`.
+
+- `scripts/cost-basis-check.mjs` (new): comprehensive test suite. `package.json`: `"test:costbasis"` added.
+
+**Language constraints preserved:** All new copy labeled "Unrealized P&L", "Unrealized Return", "Cost Basis", "Avg. Cost". No advisory language. No buy/sell signals. No target prices.
+
+**Security constraints preserved:** `FINNHUB_API_KEY` untouched. No new env vars. No new npm dependencies.
+
+**Acceptance:** `npm run test:costbasis` passes. All 21 Node.js test suites pass. `npm run build` clean. ✓
+
+---
+
 ## Dependency Budget
 
 To remain suitable for GitHub portfolio display and easy setup, the project should

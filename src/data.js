@@ -212,6 +212,9 @@ export function emptyPortfolio(profile = "balanced", source = DATA_SOURCES.mock)
     beta: 0,
     var95: 0,
     cvar95: 0,
+    totalCostBasis: null,
+    totalUnrealizedPnl: null,
+    totalUnrealizedPct: null,
   };
 }
 
@@ -237,6 +240,11 @@ export function buildPortfolio(holdings, opts = {}) {
     const liveQuote = quotePrice(quoteBySymbol[h.t]);
     const latestPrice = liveQuote || (realPath ? realPath[realPath.length - 1] : u.px);
     const value = h.lots * latestPrice;
+    // avgCost: valid only when present, finite, and strictly positive
+    const avgCost = (typeof h.avgCost === "number" && Number.isFinite(h.avgCost) && h.avgCost > 0)
+      ? h.avgCost : null;
+    const unrealizedPnl = avgCost !== null ? (latestPrice - avgCost) * h.lots : null;
+    const unrealizedPct = avgCost !== null ? (latestPrice - avgCost) / avgCost : null;
     return {
       ...u,
       px: latestPrice,
@@ -246,6 +254,10 @@ export function buildPortfolio(holdings, opts = {}) {
       companyProfile: profileBySymbol[h.t] || null,
       dataProvider: liveQuote ? "finnhub quote" : realPath ? (historyBySymbol[h.t].provider || "real") : "mock",
       realPath,
+      avgCost,
+      firstBought: (h.firstBought && typeof h.firstBought === "string") ? h.firstBought : null,
+      unrealizedPnl,
+      unrealizedPct,
     };
   }).filter(Boolean);
 
@@ -336,6 +348,18 @@ export function buildPortfolio(holdings, opts = {}) {
   const maxSharpe = optimize(assets, "sharpe", rf);
   const minRisk = optimize(assets, "risk", rf);
 
+  // portfolio-level unrealized P&L — only from holdings that have a valid avgCost
+  const assetsWithCostBasis = assets.filter(a => a.avgCost !== null);
+  const totalCostBasis = assetsWithCostBasis.length > 0
+    ? assetsWithCostBasis.reduce((s, a) => s + a.avgCost * a.lots, 0)
+    : null;
+  const totalUnrealizedPnl = assetsWithCostBasis.length > 0
+    ? assetsWithCostBasis.reduce((s, a) => s + a.unrealizedPnl, 0)
+    : null;
+  const totalUnrealizedPct = (totalCostBasis !== null && totalCostBasis > 0)
+    ? totalUnrealizedPnl / totalCostBasis
+    : null;
+
   // data-derived beta using VTI benchmark returns already computed above
   const beta = calcBeta(portRets, benchRets);
 
@@ -362,6 +386,9 @@ export function buildPortfolio(holdings, opts = {}) {
     beta,
     cvar95,
     var95: -1.65 * annVol / Math.sqrt(252) * Math.sqrt(21), // parametric 95% 1M VaR: z=1.65, horizon=21 trading days, normality assumed
+    totalCostBasis,
+    totalUnrealizedPnl,
+    totalUnrealizedPct,
   };
 }
 

@@ -255,6 +255,21 @@ function App() {
   }
   function removeTicker(t) { setHoldings(h => h.filter(x => x.t !== t)); }
   function setLots(t, lots) { setHoldings(h => h.map(x => x.t === t ? { ...x, lots } : x)); }
+  function setCostBasis(ticker, fields) {
+    setHoldings(h => h.map(x => {
+      if (x.t !== ticker) return x;
+      const updated = { ...x };
+      if ("avgCost" in fields) {
+        if (fields.avgCost !== undefined) updated.avgCost = fields.avgCost;
+        else delete updated.avgCost;
+      }
+      if ("firstBought" in fields) {
+        if (fields.firstBought !== undefined) updated.firstBought = fields.firstBought;
+        else delete updated.firstBought;
+      }
+      return updated;
+    }));
+  }
 
   function handleSavePortfolio(name) {
     const result = savePortfolio(name, holdings, assumptions, portfolioNote);
@@ -336,7 +351,8 @@ function App() {
         onImportCsv={handleImportCsv}
         onExportCsv={handleExportCsv}
         portfolioNote={portfolioNote}
-        setPortfolioNote={setPortfolioNote} />
+        setPortfolioNote={setPortfolioNote}
+        onCostBasis={setCostBasis} />
 
       <main className="main">
         {/* top bar */}

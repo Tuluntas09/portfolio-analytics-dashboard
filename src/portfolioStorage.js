@@ -44,7 +44,16 @@ export function savePortfolio(name, holdings, assumptions, notes = "", storage =
   const entry = {
     schemaVersion: SCHEMA_VERSION,
     name: trimmed,
-    holdings: holdings.map(h => ({ t: String(h.t), lots: Number(h.lots) })),
+    holdings: holdings.map(h => {
+      const saved = { t: String(h.t), lots: Number(h.lots) };
+      if (typeof h.avgCost === "number" && Number.isFinite(h.avgCost) && h.avgCost > 0) {
+        saved.avgCost = h.avgCost;
+      }
+      if (h.firstBought && typeof h.firstBought === "string" && /^\d{4}-\d{2}-\d{2}$/.test(h.firstBought)) {
+        saved.firstBought = h.firstBought;
+      }
+      return saved;
+    }),
     assumptions: {
       rf: Number(assumptions.rf),
       horizon: Number(assumptions.horizon),
@@ -108,7 +117,16 @@ export function validateEntry(entry, validTickers) {
   if (typeof paths !== "number" || !Number.isFinite(paths) || paths <= 0) return null;
 
   return {
-    holdings: holdings.map(h => ({ t: h.t, lots: h.lots })),
+    holdings: holdings.map(h => {
+      const restored = { t: h.t, lots: h.lots };
+      if (typeof h.avgCost === "number" && Number.isFinite(h.avgCost) && h.avgCost > 0) {
+        restored.avgCost = h.avgCost;
+      }
+      if (h.firstBought && typeof h.firstBought === "string" && /^\d{4}-\d{2}-\d{2}$/.test(h.firstBought)) {
+        restored.firstBought = h.firstBought;
+      }
+      return restored;
+    }),
     assumptions: { rf, horizon, paths },
     notes: String(entry.notes ?? "").slice(0, 500),
   };

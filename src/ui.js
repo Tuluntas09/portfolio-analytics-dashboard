@@ -18,6 +18,7 @@ export const fmtPct = (v, d = 1) => (v >= 0 ? "" : "−") + Math.abs(v * 100).to
 export const fmtPctSigned = (v, d = 1) => (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) + "%";
 export const fmtUSD = v => "$" + Math.round(v).toLocaleString("en-US");
 export const fmtUSDc = v => "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const fmtUSDSigned = v => (v >= 0 ? "+" : "−") + "$" + Math.round(Math.abs(v)).toLocaleString("en-US");
 export const fmtNum = (v, d = 2) => v.toFixed(d);
 
 // stable color per asset index
@@ -111,6 +112,12 @@ export const I18N = {
     portfolioNotes: "Portfolio notes",
     portfolioNotesPlaceholder: "Investment thesis, last review, reminders…",
     portfolioNotesChars: "chars",
+    averageCost: "Avg. Cost",
+    firstBought: "First Bought",
+    unrealizedPnl: "Unrealized P&L",
+    unrealizedReturn: "Unrealized Return",
+    costBasis: "Cost Basis",
+    missingCostBasis: "Missing cost basis",
   },
   tr: {
     language: "Dil",
@@ -193,6 +200,12 @@ export const I18N = {
     portfolioNotes: "Portföy notları",
     portfolioNotesPlaceholder: "Yatırım tezi, son inceleme, notlar…",
     portfolioNotesChars: "karakter",
+    averageCost: "Ort. Maliyet",
+    firstBought: "İlk Alım",
+    unrealizedPnl: "Gerçekleşmemiş K/Z",
+    unrealizedReturn: "Gerçekleşmemiş Getiri",
+    costBasis: "Maliyet",
+    missingCostBasis: "Maliyet eksik",
   },
 };
 

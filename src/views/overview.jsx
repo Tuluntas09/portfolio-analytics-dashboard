@@ -24,7 +24,7 @@
 /* @jsxFrag React.Fragment */
 
 import React from "react";
-import { assetColor, fmtUSD, fmtPct, fmtPctSigned, fmtNum, fmtUSDc } from "../ui.js";
+import { assetColor, fmtUSD, fmtUSDSigned, fmtPct, fmtPctSigned, fmtNum, fmtUSDc } from "../ui.js";
 import { Metric, Card, Pill, Table, Alert, ModuleIntro, InsightGrid, InsightCard } from "../ui.jsx";
 import { GrowthChart, Donut, Heatmap, HBars, MiniLine } from "../charts.jsx";
 import { corr, GLOSSARY } from "../data.js";
@@ -53,6 +53,10 @@ const RISK_COPY = {
     lastPrice: "Last price",
     positionValue: "Position value",
     weight: "Weight",
+    averageCost: "Avg. Cost",
+    unrealizedPnl: "Unrealized P&L",
+    unrealizedReturn: "Unrealized Return",
+    costBasis: "Cost Basis",
     readFirst: "Read first",
     overviewRead: "This view answers whether the portfolio has produced enough return for the risk taken, and which holdings drive the current allocation.",
     question: "Is the portfolio risk level acceptable?",
@@ -120,6 +124,10 @@ const RISK_COPY = {
     lastPrice: "Son fiyat",
     positionValue: "Pozisyon değeri",
     weight: "Ağırlık",
+    averageCost: "Ort. Maliyet",
+    unrealizedPnl: "Gerçekleşmemiş K/Z",
+    unrealizedReturn: "Gerçekleşmemiş Getiri",
+    costBasis: "Maliyet",
     readFirst: "İlk bakış",
     overviewRead: "Bu ekran portföyün alınan riske karşı yeterli getiri üretip üretmediğini ve mevcut dağılımı hangi varlıkların taşıdığını gösterir.",
     question: "Portföyün risk seviyesi kabul edilebilir mi?",
@@ -205,6 +213,20 @@ export function OverviewTab({ p, language = "tr" }) {
         <Metric label={copy.overviewMetricDrawdown} value={fmtPct(p.mdd)} accent="var(--neg)" sub={copy.peakToTrough} glossary={language === "tr" ? "Portföyün önceki zirvesinden gördüğü en büyük düşüş." : "Largest portfolio decline from a previous high."} />
       </div>
 
+      {p.totalUnrealizedPnl != null && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, background: "var(--border-soft)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-lg)", overflow: "hidden" }}>
+          <div style={{ background: "var(--panel)", padding: "16px 18px" }}>
+            <Metric label={copy.costBasis} value={fmtUSD(p.totalCostBasis)} sub={language === "tr" ? "maliyet bazı" : "cost basis"} />
+          </div>
+          <div style={{ background: "var(--panel)", padding: "16px 18px" }}>
+            <Metric label={copy.unrealizedPnl} value={fmtUSDSigned(p.totalUnrealizedPnl)} accent={p.totalUnrealizedPnl >= 0 ? "var(--pos)" : "var(--neg)"} />
+          </div>
+          <div style={{ background: "var(--panel)", padding: "16px 18px" }}>
+            <Metric label={copy.unrealizedReturn} value={fmtPctSigned(p.totalUnrealizedPct)} accent={p.totalUnrealizedPct >= 0 ? "var(--pos)" : "var(--neg)"} />
+          </div>
+        </div>
+      )}
+
       <div className="grid-2-1">
         <Card title={copy.cumulativeReturn} subtitle={copy.cumulativeReturnSub}>
           <GrowthChart
@@ -247,6 +269,9 @@ export function OverviewTab({ p, language = "tr" }) {
           { key: "weight", label: copy.weight, align: "right", mono: true, render: r => fmtPct(r.weight) },
           { key: "annRet", label: copy.overviewMetricReturn, align: "right", mono: true, color: r => r.annRet >= 0 ? "var(--pos)" : "var(--neg)", render: r => fmtPctSigned(r.annRet) },
           { key: "annVol", label: copy.overviewMetricVol, align: "right", mono: true, render: r => fmtPct(r.annVol) },
+          { key: "avgCost", label: copy.averageCost, align: "right", mono: true, render: r => r.avgCost != null ? fmtUSDc(r.avgCost) : React.createElement("span", { style: { color: "var(--text-faint)" } }, "—") },
+          { key: "unrealizedPnl", label: copy.unrealizedPnl, align: "right", mono: true, color: r => r.unrealizedPnl == null ? undefined : r.unrealizedPnl >= 0 ? "var(--pos)" : "var(--neg)", render: r => r.unrealizedPnl != null ? fmtUSDSigned(r.unrealizedPnl) : React.createElement("span", { style: { color: "var(--text-faint)" } }, "—") },
+          { key: "unrealizedPct", label: copy.unrealizedReturn, align: "right", mono: true, color: r => r.unrealizedPct == null ? undefined : r.unrealizedPct >= 0 ? "var(--pos)" : "var(--neg)", render: r => r.unrealizedPct != null ? fmtPctSigned(r.unrealizedPct) : React.createElement("span", { style: { color: "var(--text-faint)" } }, "—") },
           { key: "dataProvider", label: copy.sourceCol, render: r => (
             <Pill tone={dataProviderTone(r.dataProvider)} size="sm">{dataProviderLabel(r.dataProvider, language)}</Pill>
           ) },

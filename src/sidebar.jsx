@@ -73,7 +73,8 @@ export function Sidebar(props) {
     assumptions, setAssumptions, theme, toggleTheme, language = "tr", toggleLanguage, lastUpdated,
     savedPortfolios = [], onSavePortfolio, onLoadPortfolio, onDeletePortfolio, onResetPortfolio,
     onImportCsv, onExportCsv,
-    portfolioNote = "", setPortfolioNote } = props;
+    portfolioNote = "", setPortfolioNote,
+    onCostBasis } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
@@ -278,14 +279,41 @@ export function Sidebar(props) {
                 const a = assets.find(x => x.t === h.t);
                 const isExt = !lookup(h.t);
                 return (
-                  <div key={h.t} className="lot-row">
-                    <span className="num lot-tkr">{h.t}{isExt && <span className="ext-badge">EXT</span>}</span>
-                    <div className="lot-input">
-                      <input type="number" min="0" className="num" value={h.lots}
-                        onChange={e => onLots(h.t, Math.max(0, parseInt(e.target.value || "0", 10)))} />
+                  <div key={h.t} className="lot-item">
+                    <div className="lot-row">
+                      <span className="num lot-tkr">{h.t}{isExt && <span className="ext-badge">EXT</span>}</span>
+                      <div className="lot-input">
+                        <input type="number" min="0" className="num" value={h.lots}
+                          onChange={e => onLots(h.t, Math.max(0, parseInt(e.target.value || "0", 10)))} />
+                      </div>
+                      <span className="num lot-px">@ ${(a?.px ?? u?.px ?? 100).toFixed(2)}</span>
+                      <span className="num lot-val">{a ? fmtUSD(a.value) : "—"}</span>
                     </div>
-                    <span className="num lot-px">@ ${(a?.px ?? u?.px ?? 100).toFixed(2)}</span>
-                    <span className="num lot-val">{a ? fmtUSD(a.value) : "—"}</span>
+                    {onCostBasis && (
+                      <div className="lot-cost-row">
+                        <span className="lot-cost-lbl">{t(language, "averageCost")}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="num lot-cost-input"
+                          placeholder="—"
+                          value={h.avgCost != null ? h.avgCost : ""}
+                          onChange={e => {
+                            const v = parseFloat(e.target.value);
+                            onCostBasis(h.t, { avgCost: Number.isFinite(v) && v > 0 ? v : undefined });
+                          }}
+                        />
+                        <span className="lot-cost-lbl">{t(language, "firstBought")}</span>
+                        <input
+                          type="date"
+                          className="lot-date-input"
+                          value={h.firstBought || ""}
+                          max={new Date().toISOString().slice(0, 10)}
+                          onChange={e => onCostBasis(h.t, { firstBought: e.target.value || undefined })}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -586,6 +614,17 @@ export function Sidebar(props) {
         .lot-total { display: flex; justify-content: space-between; align-items: center; margin-top: 11px;
           padding-top: 10px; border-top: 1px dashed var(--border); font-size: 11.5px; color: var(--text-faint); }
         .lot-total .num { font-size: 14px; font-weight: 700; color: var(--text); }
+        .lot-item { display: flex; flex-direction: column; gap: 3px; }
+        .lot-cost-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 5px; padding: 0 2px; }
+        .lot-cost-lbl { font-size: 9.5px; color: var(--text-faint); white-space: nowrap; letter-spacing: .02em; }
+        .lot-cost-input { width: 100%; height: 26px; padding: 0 6px; border-radius: 5px; text-align: right;
+          border: 1px solid var(--border); background: var(--panel); font-size: 11.5px; outline: none; color: var(--text);
+          -moz-appearance: textfield; }
+        .lot-cost-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+        .lot-cost-input::-webkit-outer-spin-button, .lot-cost-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .lot-date-input { height: 26px; padding: 0 4px; border-radius: 5px; font-size: 11px; color: var(--text);
+          background: var(--panel); border: 1px solid var(--border); outline: none; cursor: pointer; }
+        .lot-date-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
         /* date presets */
         .seg-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
