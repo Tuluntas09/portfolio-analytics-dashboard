@@ -53,6 +53,8 @@ jobs:
           npm run test:daterange
           npm run test:universe
           npm run test:notes
+          npm run test:costbasis
+          npm run test:backup
 
       - name: Playwright E2E tests
         run: npm run test:e2e

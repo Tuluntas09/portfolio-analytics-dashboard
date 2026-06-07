@@ -897,6 +897,28 @@ implemented, tested, and documented. The repository is tagged at `v2.0.0`.
 
 **Acceptance:** `npm run test:costbasis` passes. All 21 Node.js test suites pass. `npm run build` clean. ✓
 
+### 9b — JSON Portfolio Backup / Restore ✓ *Completed 2026-06-07*
+
+**Motivation:** Phase 9a stores cost basis only in `localStorage`, which is device-local and cleared on browser reset. A one-click JSON export captures the full portfolio state — holdings with cost basis, assumptions, notes, and saved portfolios — enabling restore on any device.
+
+**What was added:**
+
+- `src/portfolioBackup.js` (new, standalone): `exportBackup`, `importBackup`, `makeBackupFilename`, `BACKUP_VERSION = 1`. No external dependencies; importable in both browser and Node.js. `importBackup` validates structure, assumptions, and filters holdings through a duck-typed `validTickers.has(t)` set; unknown tickers are silently dropped. `savedPortfolios` entries are filtered through an inline `_isSavedPortfolioWellFormed` check (mirrored from portfolioStorage.js to keep the module standalone).
+
+- `src/ui.js`: Eight new bilingual keys (EN + TR): `jsonBackup`, `jsonBackupHelp`, `jsonExport`, `jsonImport`, `jsonImportedOk`, `jsonErrorVersion`, `jsonErrorNoHoldings`, `jsonErrorInvalid`. Full EN/TR parity maintained.
+
+- `src/app.jsx`: `STORAGE_KEY` added to portfolioStorage import. `handleExportBackup` (Blob download, same pattern as CSV export). `handleImportBackup(jsonText)` (JSON.parse + importBackup, on success sets all state + localStorage). Both passed as props to Sidebar.
+
+- `src/sidebar.jsx`: Compact "JSON backup" block added immediately after the CSV import/export block. Reuses `.csv-row`, `.csv-btn`, `.csv-summary` CSS classes. Hidden `<input type="file" accept=".json">` triggered by the Import button. `backupSummary` state and `backupInputRef` ref added. No new exports (exactly 3 maintained: `Sidebar`, `Icon`, `PROFILES`).
+
+- `scripts/backup-check.mjs` (new): 30+ tests covering all export/import/round-trip paths, source-text checks. `package.json`: `"test:backup"` added. `.github/workflows/ci.yml`: `npm run test:costbasis` (Phase 9a gap) and `npm run test:backup` both added.
+
+**Language constraints preserved:** No advisory language. No buy/sell signals. No target prices.
+
+**Security constraints preserved:** `FINNHUB_API_KEY` untouched. No new env vars. No new npm dependencies. No CSV format changes. No financial formula changes. No proxy changes.
+
+**Acceptance:** `npm run test:backup` passes. All 22 Node.js test suites pass. `npm run build` clean. ✓
+
 ---
 
 ## Dependency Budget

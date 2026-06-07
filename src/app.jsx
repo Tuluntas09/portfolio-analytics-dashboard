@@ -18,7 +18,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
 import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker } from "./data.js";
-import { loadSaves, savePortfolio, deletePortfolio, validateEntry } from "./portfolioStorage.js";
+import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY } from "./portfolioStorage.js";
+import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
 import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
 import { getDefaultCustomFrom, calendarToTradingDays } from "./dateUtils.js";
 import { fmtUSD, fmtPctSigned, fmtNum, fmtPct, t } from "./ui.js";
@@ -313,6 +314,38 @@ function App() {
     URL.revokeObjectURL(url);
   }
 
+  function handleExportBackup() {
+    const payload = exportBackup(holdings, assumptions, portfolioNote, savedPortfolios);
+    const text = JSON.stringify(payload, null, 2);
+    const blob = new Blob([text], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = makeBackupFilename();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportBackup(jsonText) {
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch {
+      return { ok: false, error: "parse_error" };
+    }
+    const result = importBackup(parsed, { has: t => isValidTicker(t) });
+    if (result.ok) {
+      setHoldings(result.current.holdings);
+      setAssumptions(result.current.assumptions);
+      setPortfolioNote(result.current.notes);
+      setSavedPortfolios(result.savedPortfolios);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result.savedPortfolios));
+    }
+    return result;
+  }
+
   function handlePrintReport() {
     document.body.classList.add("export-mode");
     addEventListener("afterprint", () => document.body.classList.remove("export-mode"), { once: true });
@@ -352,7 +385,9 @@ function App() {
         onExportCsv={handleExportCsv}
         portfolioNote={portfolioNote}
         setPortfolioNote={setPortfolioNote}
-        onCostBasis={setCostBasis} />
+        onCostBasis={setCostBasis}
+        onExportBackup={handleExportBackup}
+        onImportBackup={handleImportBackup} />
 
       <main className="main">
         {/* top bar */}

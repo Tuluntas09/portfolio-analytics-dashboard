@@ -74,7 +74,8 @@ export function Sidebar(props) {
     savedPortfolios = [], onSavePortfolio, onLoadPortfolio, onDeletePortfolio, onResetPortfolio,
     onImportCsv, onExportCsv,
     portfolioNote = "", setPortfolioNote,
-    onCostBasis } = props;
+    onCostBasis,
+    onExportBackup, onImportBackup } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
@@ -85,6 +86,8 @@ export function Sidebar(props) {
   const [saveError, setSaveError] = useStateSB("");
   const [csvSummary, setCsvSummary] = useStateSB(null);
   const csvInputRef = useRefSB(null);
+  const [backupSummary, setBackupSummary] = useStateSB(null);
+  const backupInputRef = useRefSB(null);
   const [draftFrom, setDraftFrom] = useStateSB(() => customFrom || "");
   const [draftTo, setDraftTo] = useStateSB(() => customTo || "");
   const [dateError, setDateError] = useStateSB(null);
@@ -144,6 +147,33 @@ export function Sidebar(props) {
     } else {
       setSaveError(t(language, "saveErrorStorage"));
     }
+  }
+
+  function handleBackupFileChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const text = evt.target && evt.target.result;
+      if (typeof text !== "string") {
+        setBackupSummary({ type: "error", message: t(language, "jsonErrorInvalid") });
+        return;
+      }
+      const result = onImportBackup(text);
+      if (result.ok) {
+        setBackupSummary({ type: "ok", message: t(language, "jsonImportedOk") });
+      } else {
+        const msgKey = result.error === "unsupported_version" ? "jsonErrorVersion"
+          : result.error === "no_valid_holdings" ? "jsonErrorNoHoldings"
+          : "jsonErrorInvalid";
+        setBackupSummary({ type: "error", message: t(language, msgKey) });
+      }
+      e.target.value = "";
+    };
+    reader.onerror = function() {
+      setBackupSummary({ type: "error", message: t(language, "jsonErrorInvalid") });
+    };
+    reader.readAsText(file);
   }
 
   function handleCsvFileChange(e) {
@@ -359,6 +389,32 @@ export function Sidebar(props) {
                       : ""
                   }`
               }
+            </div>
+          )}
+        </div>
+
+        {/* ===== JSON BACKUP ===== */}
+        <div className="sb-block">
+          <label className="sb-label">{t(language, "jsonBackup")}</label>
+          <p className="sb-help" style={{ marginTop: 5 }}>{t(language, "jsonBackupHelp")}</p>
+          <div className="csv-row">
+            <input
+              ref={backupInputRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: "none" }}
+              onChange={handleBackupFileChange}
+            />
+            <button className="csv-btn" onClick={() => backupInputRef.current && backupInputRef.current.click()}>
+              {t(language, "jsonImport")}
+            </button>
+            <button className="csv-btn" onClick={onExportBackup}>
+              {t(language, "jsonExport")}
+            </button>
+          </div>
+          {backupSummary && (
+            <div className={"csv-summary " + backupSummary.type}>
+              {backupSummary.message}
             </div>
           )}
         </div>
