@@ -17,7 +17,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
-import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS } from "./data.js";
+import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE } from "./data.js";
+import { loadSaves, savePortfolio, deletePortfolio, validateEntry } from "./portfolioStorage.js";
+import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
 import { fmtUSD, fmtPctSigned, fmtNum, fmtPct, t } from "./ui.js";
 import { Pill } from "./ui.jsx";
 import { Sidebar } from "./sidebar.jsx";
@@ -79,6 +81,7 @@ function App() {
     profileLoaded: 0,
     requested: 0,
   });
+  const [savedPortfolios, setSavedPortfolios] = useState(() => loadSaves());
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -241,6 +244,48 @@ function App() {
   function removeTicker(t) { setHoldings(h => h.filter(x => x.t !== t)); }
   function setLots(t, lots) { setHoldings(h => h.map(x => x.t === t ? { ...x, lots } : x)); }
 
+  function handleSavePortfolio(name) {
+    const result = savePortfolio(name, holdings, assumptions);
+    if (result.ok) setSavedPortfolios(loadSaves());
+    return result;
+  }
+  function handleLoadPortfolio(entry) {
+    const validTickers = new Set(UNIVERSE.map(u => u.t));
+    const loaded = validateEntry(entry, validTickers);
+    if (!loaded) return false;
+    setHoldings(loaded.holdings);
+    setAssumptions(loaded.assumptions);
+    return true;
+  }
+  function handleDeletePortfolio(name) {
+    deletePortfolio(name);
+    setSavedPortfolios(loadSaves());
+  }
+  function handleResetPortfolio() {
+    setHoldings(Object.entries(DEFAULT_LOTS).map(([tkr, lots]) => ({ t: tkr, lots })));
+    setAssumptions({ rf: 0.043, horizon: 5, paths: 2000 });
+  }
+
+  function handleImportCsv(csvText) {
+    const validTickers = new Set(UNIVERSE.map(u => u.t));
+    const result = parseHoldingsCsv(csvText, validTickers);
+    if (result.importedCount > 0) setHoldings(result.holdings);
+    return result;
+  }
+
+  function handleExportCsv() {
+    const text = serializeHoldingsCsv(holdings);
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "portfolio-holdings.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   const empty = holdings.length === 0;
   const tabLabel = id => {
     const found = TABS.find(t => t.id === id);
@@ -262,7 +307,14 @@ function App() {
         apiStatus={apiStatus}
         marketDataStatus={marketDataStatus}
         referenceDataStatus={referenceDataStatus}
-        lastUpdated={pAdj.source.lastUpdated} />
+        lastUpdated={pAdj.source.lastUpdated}
+        savedPortfolios={savedPortfolios}
+        onSavePortfolio={handleSavePortfolio}
+        onLoadPortfolio={handleLoadPortfolio}
+        onDeletePortfolio={handleDeletePortfolio}
+        onResetPortfolio={handleResetPortfolio}
+        onImportCsv={handleImportCsv}
+        onExportCsv={handleExportCsv} />
 
       <main className="main">
         {/* top bar */}

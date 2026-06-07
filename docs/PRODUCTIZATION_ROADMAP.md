@@ -731,12 +731,52 @@ Deployment mode: Vercel static frontend (Option A) — mock/offline data, no API
 
 **Goal:** Add features that make the dashboard genuinely useful for ongoing personal portfolio monitoring, without crossing into advisory territory.
 
-### 8a — CSV import/export
+### 8a — CSV import/export ✓ *Completed 2026-06-07*
 
-**Import:** Accept a CSV with columns `ticker, lots` (and optionally `cost_basis`).
-Parse client-side using vanilla JS. Validate tickers against `UNIVERSE` before accepting.
+**What was added:**
 
-**Export:** Download the current portfolio as CSV for backup and sharing.
+- `src/holdingsCsv.js` (new): Pure, dependency-free ES module. Exports `parseHoldingsCsv(csvText, supportedTickers)` and `serializeHoldingsCsv(holdings)`. Parser handles optional header row, CRLF/LF line endings, extra columns, ticker normalization (→ uppercase), decimal lots, duplicate aggregation, unsupported-ticker filtering, and invalid-lots rejection (zero, negative, NaN, Infinity, non-numeric). Only tickers present in `UNIVERSE` are accepted. Returns `{ holdings, importedCount, unsupportedTickers, invalidRows }`. `serializeHoldingsCsv` outputs only `ticker,lots` rows — no prices, metrics, or other state.
+
+- `src/app.jsx` (updated): Added `handleImportCsv(csvText)` (calls `parseHoldingsCsv`, calls `setHoldings` only when `importedCount > 0`, returns result to sidebar) and `handleExportCsv()` (inline `Blob`/`URL.createObjectURL` download of `portfolio-holdings.csv`). Both passed as props to `Sidebar`. Added import of `parseHoldingsCsv`, `serializeHoldingsCsv` from `./holdingsCsv.js`.
+
+- `src/sidebar.jsx` (updated): Added "CSV import / export" `sb-block` section between the Lot Entry and Saved Portfolios sections. Features: hidden `<input type="file">` triggered by "Import CSV" button; "Export CSV" button; `FileReader` reads the file, calls `onImportCsv`, shows compact one-line result summary (imported count, skipped rows, unsupported tickers). Summary clears on next import attempt. New CSS classes added to inline `<style>` block.
+
+- `src/ui.js` (updated): Added 9 bilingual i18n keys (EN + TR): `csvImportExport`, `csvImport`, `csvExport`, `csvImportHelp`, `csvImportedRows`, `csvSkippedRows`, `csvNoValidRows`, `csvReadError`, `csvUnsupported`. Full EN/TR parity maintained.
+
+- `scripts/csv-check.mjs` (new): 15 tests covering all required cases plus CRLF tolerance, extra columns, and `BRK.B` dot-ticker handling.
+
+- `package.json`: `"test:csv"` added.
+- `.github/workflows/ci.yml`: `npm run test:csv` added to the Node.js validation step.
+
+**Acceptance:** `npm run test:csv` 15/15 pass. All 16 Node.js test suites pass. `npm run test:e2e` 19/19 pass. `npm run build` clean (278 kB raw / 86 kB gzip). ✓
+
+### 8b-1 — Named saved portfolios (localStorage) ✓ *Completed 2026-06-07*
+
+**What was added:**
+
+- `src/portfolioStorage.js` (new): Pure, dependency-free ES module. Exports `loadSaves`, `savePortfolio`, `deletePortfolio`, `validateEntry`, `STORAGE_KEY`, `SCHEMA_VERSION`, `MAX_SAVES`. The optional `storage` parameter enables Node.js test injection. Schema stores only user-input state (`holdings`, `assumptions`, `schemaVersion`, `name`, `savedAt`). No fetched prices, history, analytics results, company data, or API state are serialized. HTML injection is stripped via `sanitizeName`. Unknown `schemaVersion` values are ignored silently. `QuotaExceededError` is caught and returned as `{ ok: false, error: "storage_error" }` without propagating.
+
+- `src/app.jsx` (updated): Imports `loadSaves`, `savePortfolio`, `deletePortfolio`, `validateEntry` from `./portfolioStorage.js` and `UNIVERSE` from `./data.js`. Added `savedPortfolios` state (initialized from `loadSaves()`). Added four handlers: `handleSavePortfolio`, `handleLoadPortfolio`, `handleDeletePortfolio`, `handleResetPortfolio`. All five are passed as props to Sidebar. `handleLoadPortfolio` validates ticker membership against `UNIVERSE` via `validateEntry` before calling `setHoldings`/`setAssumptions`.
+
+- `src/sidebar.jsx` (updated): Added "Saved Portfolios" `sb-block` section between the Lot Entry and Date Range blocks. Features: name input + Save/Overwrite button, error display, list of saved entries with Load + Delete controls per item, Reset to default button. Uses existing sidebar visual language (`sb-block`, `sb-label`, `hold-del`, `sb-count`). Two new local state hooks: `saveName`, `saveError`. Overwrite detection shown inline (button label changes to "Overwrite"). Max cap displayed as `n/10`. New CSS classes added to inline `<style>` block.
+
+- `src/ui.js` (updated): Added 10 bilingual i18n keys (EN + TR) covering all new UI strings: `savedPortfolios`, `portfolioNamePlaceholder`, `savePortfolio`, `overwritePortfolio`, `loadPortfolio`, `deletePortfolio`, `resetToDefault`, `saveErrorEmpty`, `saveErrorMax`, `saveErrorStorage`. Full EN/TR parity maintained.
+
+- `scripts/portfolio-storage-check.mjs` (new): 14 tests — empty storage, malformed JSON, valid save round-trip, forbidden computed-field check, max-10 enforcement, duplicate-name overwrite, targeted delete, unknown schemaVersion, `validateEntry` valid/invalid/NaN-lots/negative-lots/wrong-version, `QuotaExceededError` without throw.
+
+- `package.json`: `"test:portfolios"` added.
+- `.github/workflows/ci.yml`: `npm run test:portfolios` added to the Node.js validation step.
+
+**Design constraints preserved:**
+- No new npm dependencies.
+- No changes to financial formulas, optimizer, Monte Carlo, CVaR, beta, or any calculation.
+- No changes to proxy/server code or rate-limit behavior.
+- No advisory language.
+- All 7 `public/legacy/*.jsx` files unchanged.
+
+**Build:** 274 kB raw / 85 kB gzip (well within 400/150 kB ceilings).
+
+**Acceptance:** `npm run test:portfolios` 14/14 pass. All 15 Node.js test suites pass. `npm run test:e2e` 19/19 pass. `npm run build` clean. ✓
 
 ### 8b — Saved portfolios (localStorage)
 

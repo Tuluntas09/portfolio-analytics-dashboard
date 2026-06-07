@@ -68,13 +68,19 @@ const DATE_PRESETS = ["6M", "1Y", "2Y", "5Y", "Custom"];
 export function Sidebar(props) {
   const { holdings, assets, totalValue, instruments, dataSource, apiStatus, marketDataStatus, referenceDataStatus, onAdd, onRemove, onLots,
     dateRange, setDateRange, profile, setProfile,
-    assumptions, setAssumptions, theme, toggleTheme, language = "tr", toggleLanguage, lastUpdated } = props;
+    assumptions, setAssumptions, theme, toggleTheme, language = "tr", toggleLanguage, lastUpdated,
+    savedPortfolios = [], onSavePortfolio, onLoadPortfolio, onDeletePortfolio, onResetPortfolio,
+    onImportCsv, onExportCsv } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
   const [advOpen, setAdvOpen] = useStateSB(false);
   const [activeIdx, setActiveIdx] = useStateSB(0);
   const boxRef = useRefSB(null);
+  const [saveName, setSaveName] = useStateSB("");
+  const [saveError, setSaveError] = useStateSB("");
+  const [csvSummary, setCsvSummary] = useStateSB(null);
+  const csvInputRef = useRefSB(null);
 
   const held = new Set(holdings.map(h => h.t));
   const universe = instruments || UNIVERSE;
@@ -115,6 +121,45 @@ export function Sidebar(props) {
 
   const profileText = id => (PROFILE_COPY[language] && PROFILE_COPY[language][id]) || PROFILE_COPY.en[id] || {};
   const profMeta = profileText(profile);
+  const isOverwrite = saveName.trim().length > 0 && savedPortfolios.some(e => e.name === saveName.trim());
+
+  function handleSave() {
+    const name = saveName.trim();
+    if (!name) { setSaveError(t(language, "saveErrorEmpty")); return; }
+    const result = onSavePortfolio(name);
+    if (result.ok) {
+      setSaveName("");
+      setSaveError("");
+    } else if (result.error === "max_reached") {
+      setSaveError(t(language, "saveErrorMax"));
+    } else {
+      setSaveError(t(language, "saveErrorStorage"));
+    }
+  }
+
+  function handleCsvFileChange(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const text = evt.target && evt.target.result;
+      if (typeof text !== "string") {
+        setCsvSummary({ type: "error", message: t(language, "csvReadError") });
+        return;
+      }
+      const result = onImportCsv(text);
+      if (result.importedCount === 0) {
+        setCsvSummary({ type: "error", message: null, unsupportedTickers: result.unsupportedTickers, invalidRows: result.invalidRows });
+      } else {
+        setCsvSummary({ type: "ok", importedCount: result.importedCount, unsupportedTickers: result.unsupportedTickers, invalidRows: result.invalidRows });
+      }
+      e.target.value = "";
+    };
+    reader.onerror = function() {
+      setCsvSummary({ type: "error", message: t(language, "csvReadError") });
+    };
+    reader.readAsText(file);
+  }
 
   return (
     <aside className="sidebar">
@@ -233,6 +278,93 @@ export function Sidebar(props) {
             </div>
           </div>
         )}
+
+        {/* ===== CSV IMPORT / EXPORT ===== */}
+        <div className="sb-block">
+          <label className="sb-label">{t(language, "csvImportExport")}</label>
+          <p className="sb-help" style={{ marginTop: 5 }}>{t(language, "csvImportHelp")}</p>
+          <div className="csv-row">
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv,text/csv,text/plain"
+              style={{ display: "none" }}
+              onChange={handleCsvFileChange}
+            />
+            <button className="csv-btn" onClick={() => csvInputRef.current && csvInputRef.current.click()}>
+              {t(language, "csvImport")}
+            </button>
+            <button className="csv-btn" onClick={onExportCsv}>
+              {t(language, "csvExport")}
+            </button>
+          </div>
+          {csvSummary && (
+            <div className={"csv-summary " + csvSummary.type}>
+              {csvSummary.type === "error"
+                ? (csvSummary.message || t(language, "csvNoValidRows"))
+                : `${csvSummary.importedCount} ${t(language, "csvImportedRows")}${
+                    csvSummary.invalidRows > 0 ? ` · ${csvSummary.invalidRows} ${t(language, "csvSkippedRows")}` : ""
+                  }${
+                    csvSummary.unsupportedTickers && csvSummary.unsupportedTickers.length > 0
+                      ? ` · ${t(language, "csvUnsupported")} ${csvSummary.unsupportedTickers.join(", ")}`
+                      : ""
+                  }`
+              }
+            </div>
+          )}
+        </div>
+
+        {/* ===== SAVED PORTFOLIOS ===== */}
+        <div className="sb-block">
+          <div className="sb-label-row">
+            <label className="sb-label">{t(language, "savedPortfolios")}</label>
+            <span className="sb-count num">{savedPortfolios.length}/10</span>
+          </div>
+          <div className="save-row">
+            <input
+              className="save-name-input"
+              type="text"
+              maxLength={60}
+              placeholder={t(language, "portfolioNamePlaceholder")}
+              value={saveName}
+              onChange={e => { setSaveName(e.target.value); setSaveError(""); }}
+              onKeyDown={e => { if (e.key === "Enter") handleSave(); }}
+            />
+            <button
+              className={"save-btn" + (isOverwrite ? " overwrite" : "")}
+              onClick={handleSave}
+            >
+              {isOverwrite ? t(language, "overwritePortfolio") : t(language, "savePortfolio")}
+            </button>
+          </div>
+          {saveError && <p className="save-error">{saveError}</p>}
+          {savedPortfolios.length > 0 && (
+            <div className="save-list">
+              {savedPortfolios.map(entry => (
+                <div key={entry.name} className="save-item">
+                  <span className="save-item-name" title={entry.name}>{entry.name}</span>
+                  <button
+                    className="save-load-btn"
+                    onClick={() => onLoadPortfolio(entry)}
+                  >
+                    {t(language, "loadPortfolio")}
+                  </button>
+                  <button
+                    className="hold-del"
+                    onClick={() => onDeletePortfolio(entry.name)}
+                    title={t(language, "deletePortfolio") + " " + entry.name}
+                    aria-label={t(language, "deletePortfolio") + " " + entry.name}
+                  >
+                    <Icon name="trash" size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="reset-btn" onClick={onResetPortfolio}>
+            {t(language, "resetToDefault")}
+          </button>
+        </div>
 
         {/* ===== DATE RANGE ===== */}
         <div className="sb-block">
@@ -428,6 +560,43 @@ export function Sidebar(props) {
         .proxy-dot.off { background: var(--neg); }
         .proxy-dot.checking { background: var(--accent); }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--pos-soft); } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+        /* csv import / export */
+        .csv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 9px; }
+        .csv-btn { padding: 7px 0; border-radius: 7px; font-size: 11.5px; font-weight: 600;
+          border: 1px solid var(--border); background: var(--panel); color: var(--text-dim); }
+        .csv-btn:hover { background: var(--panel-hi); color: var(--text); }
+        .csv-summary { margin-top: 7px; font-size: 10.5px; line-height: 1.4; padding: 5px 8px; border-radius: 6px; }
+        .csv-summary.ok { color: var(--pos); background: color-mix(in oklch, var(--pos), transparent 88%); }
+        .csv-summary.error { color: var(--neg); background: color-mix(in oklch, var(--neg), transparent 88%); }
+
+        /* saved portfolios */
+        .save-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 9px; }
+        .save-name-input { width: 100%; height: 32px; padding: 0 9px; border-radius: 6px; font-size: 12.5px;
+          border: 1px solid var(--border); background: var(--panel); outline: none; color: var(--text); min-width: 0; }
+        .save-name-input::placeholder { color: var(--text-faint); }
+        .save-name-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+        .save-btn { height: 32px; padding: 0 11px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+          white-space: nowrap; background: var(--accent-soft); color: var(--accent);
+          border: 1px solid color-mix(in oklch, var(--accent), transparent 55%); }
+        .save-btn:hover { background: var(--accent); color: white; }
+        .save-btn.overwrite { background: color-mix(in oklch, var(--warn), transparent 85%); color: var(--warn);
+          border-color: color-mix(in oklch, var(--warn), transparent 55%); }
+        .save-btn.overwrite:hover { background: var(--warn); color: white; }
+        .save-error { font-size: 10.5px; color: var(--neg); margin: 5px 0 0; line-height: 1.4; }
+        .save-list { display: flex; flex-direction: column; gap: 2px; margin-top: 9px; }
+        .save-item { display: grid; grid-template-columns: 1fr auto 26px; align-items: center; gap: 6px;
+          padding: 5px 8px; border-radius: 7px; }
+        .save-item:hover { background: var(--panel); }
+        .save-item-name { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .save-load-btn { font-size: 11px; font-weight: 600; color: var(--accent); padding: 3px 8px;
+          border-radius: 5px; background: var(--accent-soft); white-space: nowrap;
+          border: 1px solid color-mix(in oklch, var(--accent), transparent 60%); }
+        .save-load-btn:hover { background: var(--accent); color: white; }
+        .reset-btn { margin-top: 10px; width: 100%; padding: 7px 0; border-radius: 7px; font-size: 11.5px;
+          font-weight: 500; color: var(--text-faint); background: transparent;
+          border: 1px dashed var(--border); }
+        .reset-btn:hover { color: var(--text-dim); background: var(--panel); border-style: solid; }
       `}</style>
     </aside>
   );

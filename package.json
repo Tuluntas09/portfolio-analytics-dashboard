@@ -25,7 +25,9 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "capture:screenshots": "node scripts/capture-screenshots.mjs"
+    "capture:screenshots": "node scripts/capture-screenshots.mjs",
+    "test:portfolios": "node scripts/portfolio-storage-check.mjs",
+    "test:csv": "node scripts/csv-check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

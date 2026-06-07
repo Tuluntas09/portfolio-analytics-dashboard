@@ -47,6 +47,8 @@ jobs:
           npm run test:overview
           npm run test:analysis
           npm run test:app
+          npm run test:portfolios
+          npm run test:csv
 
       - name: Playwright E2E tests
         run: npm run test:e2e
