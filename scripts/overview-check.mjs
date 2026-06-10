@@ -158,16 +158,22 @@ const overviewSrc = fs.readFileSync(
   }
 }
 
-// ── 14. Non-advisory and benchmark wording is preserved ───────────────────
+// ── 14. Benchmark wording is updated — old hardcoded 60/40 labels removed ─
 {
-  if (!overviewSrc.includes("simplified balanced reference")) {
-    fail('EN cumulativeReturnSub must contain "simplified balanced reference"');
+  if (!overviewSrc.includes("vs. selected benchmark")) {
+    fail('EN cumulativeReturnSub must contain "vs. selected benchmark"');
   }
-  if (!overviewSrc.includes("Balanced ref. (≈60/40)")) {
-    fail('EN benchmark series name must be "Balanced ref. (≈60/40)"');
+  if (!overviewSrc.includes("seçili referansla")) {
+    fail('TR cumulativeReturnSub must contain "seçili referansla"');
   }
-  if (!overviewSrc.includes("Dengeli ref. (≈60/40)")) {
-    fail('TR benchmark series name must be "Dengeli ref. (≈60/40)"');
+  if (overviewSrc.includes("Balanced ref. (≈60/40)")) {
+    fail('overview.jsx must not contain the old hardcoded label "Balanced ref. (≈60/40)"');
+  }
+  if (overviewSrc.includes("Dengeli ref. (≈60/40)")) {
+    fail('overview.jsx must not contain the old hardcoded TR label "Dengeli ref. (≈60/40)"');
+  }
+  if (overviewSrc.includes("simplified balanced reference")) {
+    fail('overview.jsx must not contain the old "simplified balanced reference" subtitle');
   }
 }
 

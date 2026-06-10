@@ -131,6 +131,7 @@ const src = fs.readFileSync(appPath, "utf8");
     "assumptions", "tab", "apiStatus", "rateLimitWarning",
     "historyBySymbol", "quoteBySymbol", "profileBySymbol",
     "marketDataStatus", "referenceDataStatus",
+    "benchmark",
   ];
   for (const v of stateVars) {
     if (!src.includes(v)) fail(`src/app.jsx must declare state variable: ${v}`);
@@ -149,6 +150,8 @@ const src = fs.readFileSync(appPath, "utf8");
   if (!src.includes("const pAdj")) fail("src/app.jsx must define pAdj useMemo");
   if (!src.includes("calcDownsideDev")) fail("src/app.jsx pAdj must call calcDownsideDev for true Sortino");
   if (src.includes("annVol * 0.72")) fail("src/app.jsx must not use the old 0.72 Sortino approximation");
+  if (!src.includes("benchmark={benchmark}")) fail("src/app.jsx must pass benchmark={benchmark} to Sidebar");
+  if (!src.includes("setBenchmark={setBenchmark}")) fail("src/app.jsx must pass setBenchmark={setBenchmark} to Sidebar");
 }
 
 // ── 17. rateLimitWarning detection present in fetch chains ────────────────

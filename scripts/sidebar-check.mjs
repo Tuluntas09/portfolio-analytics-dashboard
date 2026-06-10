@@ -54,7 +54,7 @@ const sidebarSrc = fs.readFileSync(path.join(root, "src", "sidebar.jsx"), "utf8"
   }
 }
 
-// ── 5. Imports from src/data.js (UNIVERSE and lookup) ─────────────────────
+// ── 5. Imports from src/data.js (UNIVERSE, lookup, BENCHMARK_TICKERS) ─────
 {
   if (!sidebarSrc.includes('from "./data.js"')) {
     fail('src/sidebar.jsx must import from "./data.js" for UNIVERSE and lookup');
@@ -64,6 +64,9 @@ const sidebarSrc = fs.readFileSync(path.join(root, "src", "sidebar.jsx"), "utf8"
   }
   if (!sidebarSrc.match(/import\s*\{[^}]*\blookup\b[^}]*\}\s*from\s*["']\.\/data\.js["']/)) {
     fail('src/sidebar.jsx must import "lookup" from "./data.js"');
+  }
+  if (!sidebarSrc.match(/import\s*\{[^}]*\bBENCHMARK_TICKERS\b[^}]*\}\s*from\s*["']\.\/data\.js["']/)) {
+    fail('src/sidebar.jsx must import "BENCHMARK_TICKERS" from "./data.js"');
   }
 }
 

@@ -2,7 +2,7 @@
 
 **Project:** Quant Portfolio Analytics Dashboard  
 **Date:** 2026-06-10  
-**Status:** Current through Phase 11c — data-derived beta, empirical CVaR, and true Sortino (downside deviation) are all live.
+**Status:** Current through Phase 11d — data-derived beta, empirical CVaR, true Sortino (downside deviation), and user-selectable benchmark (VTI/SPY/QQQ/BND) are all live.
 
 This document is a reference for every quantitative metric computed in `src/data.js`.  
 It records the current formula, whether the output is data-derived or approximated,  
@@ -21,7 +21,7 @@ which user assumptions feed into it, known limitations, and what test coverage e
 | Max Drawdown | `min(v/peak - 1)` running peak-trough | Data-derived | None | Daily granularity; intraday drawdowns not captured; bounded in (−1, 0] | metrics-check |
 | VaR (95%, 1M) | `−1.65 × annVol / sqrt(252) × sqrt(21)` | Approximation (parametric) | None | Normality assumption; understates tail risk for fat-tailed returns; 21-day month | metrics-check |
 | CVaR (95%, 1M) | Mean of worst 5% daily returns × sqrt(21) | Data-derived (empirical) | None | Requires ≥20 observations; returns 0 for short/flat paths; sqrt(21) scaling assumes i.i.d. | metrics-check (sign, ≤VaR, zero-vol guard) |
-| Beta | `cov(portRets, benchRets) / var(benchRets)` | Data-derived | None | VTI used as benchmark; fallback 1.0 when n<20, bench variance≈0, or result non-finite | metrics-check (finiteness, fallback, not-synthetic) |
+| Beta | `cov(portRets, benchRets) / var(benchRets)` | Data-derived | None | User-selected benchmark (default VTI; options VTI/SPY/QQQ/BND); fallback 1.0 when n<20, bench variance≈0, or result non-finite | metrics-check (finiteness, fallback, not-synthetic) |
 | Optimizer Sharpe (maxSharpe) | Weight tilt: per-asset Sharpe > 0.6 threshold | Heuristic | `assumptions.rf` | Not MVO; constants 0.6 / 0.45 are calibrated heuristics; not globally optimal | metrics-check (weight sum, floor) |
 | Optimizer Risk (minRisk) | Weight tilt: annVol < 0.22 threshold | Heuristic | None | Same; 0.22 / 1.4 are calibrated heuristics | metrics-check (weight sum, floor) |
 | Rolling Vol (30d) | `sqrt(sum((r − mean)² / 30)) × sqrt(252)` | Data-derived | None | 30-day window; mean-centered (std dev) — consistent with theory, unlike headline vol | metrics-check (length, finiteness) |
@@ -29,7 +29,7 @@ which user assumptions feed into it, known limitations, and what test coverage e
 | Rolling Sharpe (63d) | `(daily_mean × 252 − rf) / rolling_annVol` | Data-derived + user rf | `assumptions.rf` | Arithmetic return scaling; epsilon guard `v \|\| 1e-6` prevents division by zero | metrics-check (length, finiteness) |
 | Risk Contribution | `weight × annVol × weighted_avg_corr`, normalized | Approximation | None | Missing `vol_j` term vs true Euler decomposition; simpler but not exact marginal contribution | None |
 | HHI (Concentration) | `sum(weight²)` | Data-derived | None | Standard Herfindahl–Hirschman index; correct | None |
-| Benchmark Reference | VTI path × BENCH_EQUITY_SCALAR + BENCH_DAILY_INCOME | Scenario approx (see Phase 3b) | None | Not an actual 60/40 index; BND not included; see ARCHITECTURE_AUDIT.md Risk 6 | smoke-check (benchCum finiteness) |
+| Benchmark Reference | Direct price path of user-selected benchmark ticker (VTI default) | Data-derived | None | Price-return only; no dividend adjustment; default VTI | smoke-check (benchCum finiteness) |
 
 ---
 
@@ -180,9 +180,10 @@ the same `minPathLength` window.
 - Benchmark variance is near zero (`bVar < 1e-12` — flat benchmark price)
 - Computed beta is not finite
 
-**Limitation:** VTI is used as the benchmark regardless of portfolio composition.
-For portfolios that do not correlate with US equities (e.g., all-bond), the beta
-value against VTI has limited interpretive meaning.
+**Limitation:** The user-selected benchmark (VTI, SPY, QQQ, or BND; default VTI) is used. For portfolios
+with weak correlation to the selected benchmark (e.g., an all-equity portfolio vs. BND), the beta
+value has limited interpretive meaning. Selecting a benchmark that better matches the portfolio
+composition improves interpretability.
 
 ---
 
@@ -273,6 +274,7 @@ Phase 4b (tests 12–15):
 | Item | Current | Target | Status |
 |---|---|---|---|
 | Sortino denominator | `annVol × 0.72` proxy | True downside deviation: `sqrt(mean(min(r,0)²)) × sqrt(252)`, T=0 | **Done — Phase 11c** |
+| Benchmark selector | Hardcoded VTI with 60/40 scalar approximation | User-selectable (VTI/SPY/QQQ/BND); direct price path; `BENCH_EQUITY_SCALAR` removed | **Done — Phase 11d** |
 | Annualized vol | Second moment `E[r²]` | Mean-centered `E[(r-mean)²]` (bias negligible for typical equity daily returns) | Low priority |
 | Rolling return | Arithmetic annualization | CAGR: `(1 + geometric_63d)^(252/63) - 1` | Low priority |
 | Optimizer | Heuristic weight-tilt | True MVO via quadratic programming | Long-term |

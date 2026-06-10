@@ -34,6 +34,7 @@ export const UNIVERSE = [
   { t: "MSFT", name: "Microsoft Corp.",           cls: "Equity", sector: "Technology",     px: 441.07, mu: 0.158, sig: 0.231 },
   { t: "NVDA", name: "NVIDIA Corp.",              cls: "Equity", sector: "Semiconductors", px: 138.42, mu: 0.310, sig: 0.452 },
   { t: "VTI",  name: "Vanguard Total Stock Mkt",  cls: "ETF",    sector: "US Broad Market",px: 296.55, mu: 0.102, sig: 0.158 },
+  { t: "SPY",  name: "SPDR S&P 500 ETF",          cls: "ETF",    sector: "US Large Cap",   px: 590.42, mu: 0.102, sig: 0.158 },
   { t: "BND",  name: "Vanguard Total Bond Mkt",   cls: "ETF",    sector: "Aggregate Bond", px: 73.21,  mu: 0.038, sig: 0.061 },
   { t: "AMZN", name: "Amazon.com Inc.",           cls: "Equity", sector: "Consumer Disc.", px: 201.30, mu: 0.182, sig: 0.298 },
   { t: "GOOGL",name: "Alphabet Inc. Class A",     cls: "Equity", sector: "Communication",  px: 176.49, mu: 0.150, sig: 0.255 },
@@ -47,16 +48,11 @@ export const UNIVERSE = [
   { t: "BRK.B",name: "Berkshire Hathaway B",      cls: "Equity", sector: "Financials",     px: 467.20, mu: 0.108, sig: 0.176 },
 ];
 
+// Tickers available as user-selectable benchmarks (VTI default; all are in UNIVERSE for mock mode).
+export const BENCHMARK_TICKERS = ["VTI", "SPY", "QQQ", "BND"];
+
 // default starting portfolio: ticker -> lots (shares)
 export const DEFAULT_LOTS = { AAPL: 120, MSFT: 60, NVDA: 240, VTI: 180, BND: 400 };
-
-// Simplified balanced reference scenario constants — used in buildPortfolio for the comparison chart.
-// BENCH_EQUITY_SCALAR: scales VTI daily returns to approximate 60% equity / 40% bond exposure.
-// BENCH_DAILY_INCOME:  adds ≈2.5 %/yr drift representing notional bond income on the 40% allocation.
-// The output is a scenario approximation, not an actual 60/40 blended index (BND is not fetched).
-// See docs/ARCHITECTURE_AUDIT.md Risk 6 for full context and Phase 3c migration path.
-const BENCH_EQUITY_SCALAR = 0.85;
-const BENCH_DAILY_INCOME  = 0.0001;
 
 export function lookup(t) { return UNIVERSE.find(u => u.t === t); }
 
@@ -301,16 +297,14 @@ export function buildPortfolio(holdings, opts = {}) {
     portRets.push(r);
   }
 
-  // cumulative growth of $1 — portfolio + simplified balanced reference scenario
-  // Reference: VTI real history (when proxy available) or VTI mock GBM, scaled by
-  // BENCH_EQUITY_SCALAR and BENCH_DAILY_INCOME to approximate 60/40 equity/bond behavior.
-  // NOT an actual blended index — BND is not included. See ARCHITECTURE_AUDIT.md Risk 6.
+  // cumulative growth of $1 — portfolio + selected benchmark
   const cum = [1];
   portRets.forEach(r => cum.push(cum[cum.length - 1] * (1 + r)));
-  const benchPath = (historyPath(historyBySymbol.VTI, days) || pricePath("VTI", days, seed + 7)).slice(-minPathLength);
+  const benchTicker = (opts.benchmark && BENCHMARK_TICKERS.includes(opts.benchmark)) ? opts.benchmark : "VTI";
+  const benchPath = (historyPath(historyBySymbol[benchTicker], days) || pricePath(benchTicker, days, seed + 7)).slice(-minPathLength);
   const benchRets = dailyReturns(benchPath);
   const benchCum = [1];
-  benchRets.forEach(r => benchCum.push(benchCum[benchCum.length - 1] * (1 + r * BENCH_EQUITY_SCALAR + BENCH_DAILY_INCOME)));
+  benchRets.forEach(r => benchCum.push(benchCum[benchCum.length - 1] * (1 + r)));
 
   // headline stats
   const annRet = Math.pow(cum[cum.length - 1], 252 / portRets.length) - 1;
@@ -374,7 +368,6 @@ export function buildPortfolio(holdings, opts = {}) {
     ? totalUnrealizedPnl / totalCostBasis
     : null;
 
-  // data-derived beta using VTI benchmark returns already computed above
   const beta = calcBeta(portRets, benchRets);
 
   // empirical CVaR: mean of worst 5% daily returns, scaled to 1-month via sqrt(21)
@@ -395,7 +388,7 @@ export function buildPortfolio(holdings, opts = {}) {
 
   return {
     assets, totalValue, profile, source, days,
-    portRets, cum, benchCum,
+    portRets, cum, benchCum, benchmark: benchTicker,
     annRet, annVol, sharpe, mdd, rf, hhi,
     rollVol, rollRet, rollSharpe,
     maxSharpe, minRisk,

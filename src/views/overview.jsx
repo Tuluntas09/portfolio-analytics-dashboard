@@ -41,7 +41,7 @@ const RISK_COPY = {
     totalRisk: "total risk",
     peakToTrough: "peak to trough",
     cumulativeReturn: "Cumulative return",
-    cumulativeReturnSub: "Portfolio growth vs. simplified balanced reference (VTI-based, ≈60/40 scenario). Normalized to 1.00 at period start.",
+    cumulativeReturnSub: "Portfolio growth vs. selected benchmark. Normalized to 1.00 at period start.",
     portfolio: "Portfolio",
     portfolioAllocation: "Portfolio allocation",
     allocationSub: "Weights are calculated from lots x latest price.",
@@ -112,7 +112,7 @@ const RISK_COPY = {
     totalRisk: "toplam risk",
     peakToTrough: "zirveden dibe",
     cumulativeReturn: "Kümülatif getiri",
-    cumulativeReturnSub: "Portföy büyümesini basitleştirilmiş dengeli referansla karşılaştırır (VTI tabanlı, ≈60/40 senaryo). Değerler dönem başında 1,00 olarak normalize edilir.",
+    cumulativeReturnSub: "Portföy büyümesini seçili referansla karşılaştırma. Değerler dönem başında 1,00 olarak normalize edilir.",
     portfolio: "Portföy",
     portfolioAllocation: "Portföy dağılımı",
     allocationSub: "Ağırlıklar lot x son fiyat üzerinden hesaplanır.",
@@ -263,7 +263,7 @@ export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas
           <GrowthChart
             series={[
               { name: copy.portfolio, data: p.cum, color: "var(--accent)", fill: true },
-              { name: language === "tr" ? "Dengeli ref. (≈60/40)" : "Balanced ref. (≈60/40)", data: p.benchCum, color: "var(--text-faint)", dash: "4 4" },
+              { name: p.benchmark || "VTI", data: p.benchCum, color: "var(--text-faint)", dash: "4 4" },
             ]}
             height={292}
           />

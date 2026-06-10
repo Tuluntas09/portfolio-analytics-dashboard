@@ -234,4 +234,19 @@ function linearHistory(startPrice, endPrice, n) {
   }
 }
 
+// 21. Explicit benchmark option — different tickers produce different benchCum; p.benchmark is returned
+{
+  const pVTI = adapter.buildPortfolio([{ t: "AAPL", lots: 10 }], { days: 252, benchmark: "VTI" });
+  const pQQQ = adapter.buildPortfolio([{ t: "AAPL", lots: 10 }], { days: 252, benchmark: "QQQ" });
+  const termVTI = pVTI.benchCum[pVTI.benchCum.length - 1];
+  const termQQQ = pQQQ.benchCum[pQQQ.benchCum.length - 1];
+  if (!Number.isFinite(termVTI)) fail(`VTI benchmark: terminal benchCum must be finite, got ${termVTI}`);
+  if (!Number.isFinite(termQQQ)) fail(`QQQ benchmark: terminal benchCum must be finite, got ${termQQQ}`);
+  if (Math.abs(termVTI - termQQQ) < 1e-6) {
+    fail(`VTI and QQQ benchmarks must produce different terminal benchCum values (got both ≈ ${termVTI.toFixed(4)})`);
+  }
+  if (pVTI.benchmark !== "VTI") fail(`p.benchmark must equal "VTI" when opt is "VTI", got ${pVTI.benchmark}`);
+  if (pQQQ.benchmark !== "QQQ") fail(`p.benchmark must equal "QQQ" when opt is "QQQ", got ${pQQQ.benchmark}`);
+}
+
 console.log("Metrics checks passed");

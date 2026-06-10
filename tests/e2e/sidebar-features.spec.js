@@ -221,3 +221,29 @@ test.describe("Snapshot history (seeded localStorage)", () => {
     await expect(page.getByText("Portfolio value history")).toBeVisible();
   });
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// H. Benchmark selector
+// ──────────────────────────────────────────────────────────────────────────────
+
+test.describe("Benchmark selector", () => {
+  test.beforeEach(async ({ page }) => {
+    await prepareLocalStorage(page);
+    await page.goto("/");
+    await page.waitForSelector(".app", { timeout: APP_TIMEOUT });
+    // The benchmark selector lives inside Advanced assumptions — open the toggle first.
+    await page.locator(".adv-toggle").click();
+    await page.waitForSelector(".bench-sel-btn", { timeout: APP_TIMEOUT });
+  });
+
+  test("benchmark selector shows 4 options with VTI active by default", async ({ page }) => {
+    await expect(page.locator(".bench-sel-btn")).toHaveCount(4);
+    await expect(page.locator(".bench-sel-btn.on")).toHaveText("VTI");
+  });
+
+  test("selecting QQQ activates QQQ and deactivates VTI", async ({ page }) => {
+    await page.locator(".bench-sel-btn", { hasText: "QQQ" }).click();
+    await expect(page.locator(".bench-sel-btn.on")).toHaveText("QQQ");
+    await expect(page.locator(".bench-sel-btn", { hasText: "VTI" })).not.toHaveClass(/\bon\b/);
+  });
+});

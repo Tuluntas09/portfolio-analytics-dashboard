@@ -23,7 +23,7 @@
 
 import React from "react";
 import { t, fmtUSD } from "./ui.js";
-import { UNIVERSE, lookup, isValidTicker } from "./data.js";
+import { UNIVERSE, lookup, isValidTicker, BENCHMARK_TICKERS } from "./data.js";
 import { validateDateRange } from "./dateUtils.js";
 
 const { useState: useStateSB, useRef: useRefSB, useEffect: useEffectSB } = React;
@@ -76,7 +76,8 @@ export function Sidebar(props) {
     portfolioNote = "", setPortfolioNote,
     onCostBasis,
     onExportBackup, onImportBackup,
-    onSaveActiveState, lastActiveSavedAt = null } = props;
+    onSaveActiveState, lastActiveSavedAt = null,
+    benchmark = "VTI", setBenchmark } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
@@ -589,6 +590,23 @@ export function Sidebar(props) {
                 <input type="range" min="0" max="6" step="0.1" value={assumptions.rf * 100}
                   onChange={e => setAssumptions({ ...assumptions, rf: +e.target.value / 100 })} />
                 <p className="sb-help">{t(language, "rfHelp")}</p>
+              </div>
+              <div className="adv-field">
+                <div style={{ marginBottom: 6, fontSize: 11, color: "var(--text-faint)", fontWeight: 500 }}>
+                  {language === "tr" ? "Referans" : "Benchmark"}
+                </div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {BENCHMARK_TICKERS.map((tk) => (
+                    <button
+                      key={tk}
+                      className={"bench-sel-btn" + (benchmark === tk ? " on" : "")}
+                      onClick={() => setBenchmark && setBenchmark(tk)}
+                      style={{ flex: 1, padding: "5px 0", fontSize: 11, fontWeight: 600 }}
+                    >
+                      {tk}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="adv-field">
                 <div className="adv-head"><span>{t(language, "mcHorizon")}</span><span className="num">{assumptions.horizon}y</span></div>

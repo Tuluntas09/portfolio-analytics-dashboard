@@ -17,7 +17,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
-import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker, calcDownsideDev } from "./data.js";
+import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker, calcDownsideDev, BENCHMARK_TICKERS } from "./data.js";
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY } from "./portfolioStorage.js";
 import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
 import { loadSnapshots, recordSnapshot, calcDeltas, exportSnapshots, importSnapshots } from "./portfolioSnapshots.js";
@@ -68,6 +68,7 @@ function App() {
   const [customFrom, setCustomFrom] = useState(getDefaultCustomFrom);
   const [customTo, setCustomTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [profile, setProfile] = useState("balanced");
+  const [benchmark, setBenchmark] = useState("VTI");
   const [assumptions, setAssumptions] = useState(() => {
     const saved = loadActiveState();
     return saved ? saved.assumptions : { rf: 0.043, horizon: 5, paths: 2000 };
@@ -158,7 +159,7 @@ function App() {
 
     const controller = new AbortController();
     const { from, to } = historyWindow(dateRange, customFrom, customTo);
-    const uniqueSymbols = Array.from(new Set([...symbols, "VTI"]));
+    const uniqueSymbols = Array.from(new Set([...symbols, benchmark]));
     setMarketDataStatus({ status: "loading", message: "Loading market history", loaded: 0, requested: symbols.length });
 
     Promise.all(uniqueSymbols.map(symbol => {
@@ -248,7 +249,7 @@ function App() {
       ? calendarToTradingDays(customFrom, customTo)
       : (daysFor[dateRange] || 504);
     return dataAdapter.buildPortfolio(holdings, {
-      days, profile,
+      days, profile, benchmark,
       rf: assumptions.rf,
       seed: 20260604 + (dateRange.length * 13),
       source: Object.keys(historyBySymbol).length || Object.keys(quoteBySymbol).length || Object.keys(profileBySymbol).length ? "real" : "mock",
@@ -256,7 +257,7 @@ function App() {
       quoteBySymbol,
       profileBySymbol,
     });
-  }, [holdings, dateRange, customFrom, customTo, profile, dataAdapter, historyBySymbol, quoteBySymbol, profileBySymbol, assumptions.rf]);
+  }, [holdings, dateRange, customFrom, customTo, profile, benchmark, dataAdapter, historyBySymbol, quoteBySymbol, profileBySymbol, assumptions.rf]);
 
   // apply risk-free assumption to derived stats
   const pAdj = useMemo(() => {
@@ -429,7 +430,9 @@ function App() {
         onExportBackup={handleExportBackup}
         onImportBackup={handleImportBackup}
         onSaveActiveState={handleSaveActiveState}
-        lastActiveSavedAt={lastActiveSavedAt} />
+        lastActiveSavedAt={lastActiveSavedAt}
+        benchmark={benchmark}
+        setBenchmark={setBenchmark} />
 
       <main className="main">
         {/* top bar */}
@@ -588,6 +591,11 @@ function App() {
           display: grid; place-items: center; color: var(--text-faint); font-size: 12px; font-weight: 600; }
         .news-head { font-size: 12.5px; color: var(--text); font-weight: 500; line-height: 1.4; text-wrap: pretty; }
         .news-meta { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+
+        /* benchmark selector buttons (in sidebar Advanced section) */
+        .bench-sel-btn { background: var(--panel-hi); border: 1px solid var(--border-soft); border-radius: var(--r-sm); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
+        .bench-sel-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .bench-sel-btn:hover:not(.on) { color: var(--text); border-color: var(--border); }
 
         /* data sources */
         .src-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
