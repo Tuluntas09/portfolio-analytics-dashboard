@@ -273,6 +273,19 @@ function App() {
     return { ...p, rf: assumptions.rf, sharpe, sortino };
   }, [p, assumptions.rf]);
 
+  const printDate = useMemo(
+    () => new Date().toLocaleDateString(language === "tr" ? "tr-TR" : "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    [language]
+  );
+
+  const printDataSourceLabel = pAdj.source?.id === "real"
+    ? (language === "tr" ? "Canlı veri" : "Real data")
+    : (language === "tr" ? "Model veri (çevrimdışı)" : "Model data (offline)");
+
   useEffect(() => {
     if (pAdj.source?.id !== "real") return;
     if (marketDataStatus.status !== "ready") return;
@@ -475,6 +488,28 @@ function App() {
           </div>
         </header>
 
+        {/* print-only report header — hidden on screen, visible in @media print */}
+        <div className="print-header">
+          <div className="ph-title">{t(language, "printHeaderTitle")}</div>
+          <div className="ph-meta">
+            <span>{t(language, "printHeaderGenerated")}: {printDate}</span>
+            <span className="ph-sep" />
+            <span>{pAdj.assets.length} {t(language, "holdings")} · {fmtUSD(pAdj.totalValue)}</span>
+            <span className="ph-sep" />
+            <span>{t(language, "printHeaderRange")}: {dateRange === "Custom" ? `${customFrom} → ${customTo}` : dateRange}</span>
+            <span className="ph-sep" />
+            <span>{t(language, "printHeaderBenchmark")}: {benchmark}</span>
+            <span className="ph-sep" />
+            <span>{t(language, "printHeaderSource")}: {printDataSourceLabel}</span>
+          </div>
+          {portfolioNote && (
+            <div className="ph-note">
+              <span className="ph-note-label">{t(language, "printHeaderNote")}:</span> {portfolioNote}
+            </div>
+          )}
+          <div className="ph-disclaimer">{t(language, "printHeaderDisclaimer")}</div>
+        </div>
+
         {/* tab nav */}
         <nav className="tabnav">
           {TABS.map(t => (
@@ -530,13 +565,41 @@ function App() {
           cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s; }
         .print-btn:hover { color: var(--text); border-color: var(--border); }
         body.export-mode .print-btn { display: none; }
+        .print-header { display: none; }
         @media print {
           .sidebar { display: none !important; }
           .topbar { display: none !important; }
           .tabnav { display: none !important; }
+          .rate-limit-banner { display: none !important; }
+          .print-header { display: block !important; margin-bottom: 18px; }
+          .ph-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #111; }
+          .ph-meta { font-size: 11px; color: #444; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+          .ph-sep { width: 3px; height: 3px; border-radius: 99px; background: #888; display: inline-block; }
+          .ph-note { font-size: 11px; color: #555; margin-bottom: 6px; }
+          .ph-note-label { font-weight: 600; }
+          .ph-disclaimer { font-size: 10px; color: #777; border-top: 1px solid #ccc; padding-top: 6px; margin-top: 6px; font-style: italic; }
           .app { display: block; height: auto; overflow: visible; }
           .main { overflow: visible; }
           .content { overflow: visible; padding: 12px; }
+          .card { page-break-inside: avoid; break-inside: avoid; }
+          .tbl thead th { position: static; }
+          .grid-2-1, .grid-1-2, .grid-2-eq, .opt-cards, .insight-grid { grid-template-columns: 1fr !important; }
+          .kpi-strip { grid-template-columns: repeat(3, 1fr) !important; }
+          @page { margin: 18mm 14mm; }
+          :root {
+            --bg: #ffffff;
+            --panel: #f9f9f9;
+            --panel-hi: #f2f2f2;
+            --panel-2: #f5f5f5;
+            --border: #d0d0d0;
+            --border-soft: #e4e4e4;
+            --text: #111111;
+            --text-dim: #333333;
+            --text-faint: #666666;
+            --grid: #e0e0e0;
+            --table-head: #f2f2f2;
+            --table-zebra: #f9f9f9;
+          }
         }
 
         .tabnav { display: flex; gap: 2px; padding: 0 22px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }

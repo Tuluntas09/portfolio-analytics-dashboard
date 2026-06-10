@@ -1028,7 +1028,52 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 **Test results:** 37/37 Playwright E2E pass. All 24+ Node.js check scripts pass. `npm run build` clean (305 kB / 92 kB gzip / 34 modules / 0 warnings).
 
 **Open targets remaining:**
-- Production proxy deployment (Render) — Phase 11f
+- Production proxy deployment (Render) — Phase 11g
+
+### 11f — Report Export Polish ✓ *Completed 2026-06-10*
+
+**Goal:** Improve browser-native print/PDF output with a print-only report header, professional page layout, and visible non-advisory disclaimer. No screen-visible UI change. No formula, storage, proxy, or dependency changes.
+
+**Problem:** The previous `@media print` block hid the sidebar, topbar, and tab nav, leaving the printed page as raw tab content with zero context — no title, date range, benchmark, data source status, or disclaimer. The printed artifact was unusable as a CV/demo reference.
+
+**What was added:**
+
+- `src/ui.js`: 7 new bilingual i18n keys (EN + TR): `printHeaderTitle`, `printHeaderGenerated`, `printHeaderRange`, `printHeaderBenchmark`, `printHeaderSource`, `printHeaderNote`, `printHeaderDisclaimer`. Added after the existing `printReport` key in both locale blocks.
+
+- `src/app.jsx`:
+  - `printDate` useMemo: evaluates `new Date().toLocaleDateString(locale, {...})` once on mount with locale-aware formatting (tr-TR / en-US).
+  - `printDataSourceLabel`: derived string using `pAdj.source?.id === "real"` — the same source signal already used by the snapshot recording effect.
+  - `<div className="print-header">` inserted between topbar and tabnav. Hidden on screen (`display: none`). Contains: report title, generated date, holdings count + portfolio value, date range, selected benchmark, data source label, optional portfolio notes (shown only when non-empty), and non-advisory disclaimer. All strings via `t(language, key)` for bilingual support.
+  - `@media print` block expanded: rate-limit banner hidden; `@page { margin: 18mm 14mm }` added; `.card { page-break-inside: avoid; break-inside: avoid }` added; `.tbl thead th { position: static }` for print; multi-column grids collapsed to single column; CSS custom properties overridden to light values (`--bg: #ffffff`, `--panel: #f9f9f9`, `--text: #111111`, etc.) so dark-theme sessions produce readable output.
+
+- `scripts/export-check.mjs`: 13 new tests (checks 11–23):
+  - print-header element present in JSX
+  - print-header `display:none` in screen CSS
+  - print-header shown in `@media print`
+  - rate-limit-banner hidden in `@media print`
+  - `@page` rule present
+  - `page-break-inside: avoid` on `.card`
+  - `--bg: #ffffff` CSS var override in print
+  - `{benchmark}` reference in print-header
+  - `printHeaderDisclaimer` key used in print-header
+  - EN and TR locale contain `printHeaderDisclaimer`
+  - EN and TR locale contain `printHeaderTitle`
+  - Total: 10 → 23 tests.
+
+**Design constraints preserved:**
+- `handlePrintReport()` logic unchanged: `export-mode` class → `window.print()` → `afterprint` cleanup.
+- `window.__exportTab` and `window.__exportDone` PPTX hooks preserved.
+- No screen-visible UI change (`print-header` is `display:none` on screen).
+- No financial formula changes.
+- No localStorage key or schema changes.
+- No proxy/server changes.
+- No new npm dependencies.
+- No advisory language.
+- All public/legacy files unchanged.
+
+**Version invariants:** SCHEMA_VERSION=1, ACTIVE_STATE_VERSION=1, SNAPSHOT_VERSION=1, BACKUP_VERSION=1. All localStorage key names unchanged.
+
+**Test results:** 37/37 Playwright E2E pass. `npm run test:export` 23/23 pass. `npm run test:app` pass. `npm run test:notes` 35/35 pass. `npm run build` clean (308 kB / 93 kB gzip / 34 modules / 0 warnings).
 
 ---
 

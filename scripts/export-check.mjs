@@ -87,5 +87,104 @@ const appCheckSrc = fs.readFileSync(path.join(root, "scripts", "app-check.mjs"),
   pass("legacy window.__exportTab and window.__exportDone preserved");
 }
 
+// ── 11. print-header element present in app.jsx JSX ────────────────────────
+{
+  if (!appSrc.includes('className="print-header"'))
+    fail('app.jsx must render a <div className="print-header"> element');
+  pass('print-header element present in app.jsx JSX');
+}
+
+// ── 12. print-header hidden on screen ───────────────────────────────────────
+{
+  if (!appSrc.includes('.print-header { display: none'))
+    fail('app.jsx must set .print-header { display: none } in screen CSS');
+  pass('.print-header display:none in screen CSS');
+}
+
+// ── 13. print-header shown in @media print ──────────────────────────────────
+{
+  const printBlock = appSrc.slice(appSrc.indexOf('@media print'));
+  if (!printBlock.includes('.print-header'))
+    fail('@media print block must reference .print-header');
+  pass('.print-header visible in @media print');
+}
+
+// ── 14. rate-limit-banner hidden in @media print ────────────────────────────
+{
+  const printBlock = appSrc.slice(appSrc.indexOf('@media print'));
+  if (!printBlock.includes('.rate-limit-banner'))
+    fail('@media print must hide .rate-limit-banner');
+  pass('.rate-limit-banner hidden in @media print');
+}
+
+// ── 15. @page margin rule present ───────────────────────────────────────────
+{
+  if (!appSrc.includes('@page'))
+    fail('app.jsx must include an @page margin rule in @media print');
+  pass('@page rule present');
+}
+
+// ── 16. page-break-inside: avoid on .card ───────────────────────────────────
+{
+  if (!appSrc.includes('page-break-inside: avoid') && !appSrc.includes('break-inside: avoid'))
+    fail('app.jsx @media print must set page-break-inside:avoid on .card');
+  pass('page-break-inside: avoid set for print');
+}
+
+// ── 17. print CSS var overrides present ─────────────────────────────────────
+{
+  if (!appSrc.includes('--bg: #ffffff'))
+    fail('app.jsx @media print must override --bg to #ffffff');
+  pass('@media print overrides --bg to #ffffff');
+}
+
+// ── 18. benchmark reference in print header ─────────────────────────────────
+{
+  if (!appSrc.includes('{benchmark}'))
+    fail('app.jsx print-header must include {benchmark}');
+  pass('print-header references {benchmark}');
+}
+
+// ── 19. disclaimer i18n key used in print header ────────────────────────────
+{
+  if (!appSrc.includes('printHeaderDisclaimer'))
+    fail('app.jsx print-header must use t(language, "printHeaderDisclaimer")');
+  pass('printHeaderDisclaimer key used in print-header');
+}
+
+// ── 20. printHeaderDisclaimer key in EN locale ──────────────────────────────
+{
+  const enBlock = uiSrc.slice(0, uiSrc.indexOf('tr: {'));
+  if (!enBlock.includes('printHeaderDisclaimer:'))
+    fail('ui.js EN locale must have printHeaderDisclaimer key');
+  pass('printHeaderDisclaimer key in EN locale');
+}
+
+// ── 21. printHeaderDisclaimer key in TR locale ──────────────────────────────
+{
+  const trStart = uiSrc.indexOf('tr: {');
+  const trBlock = uiSrc.slice(trStart);
+  if (!trBlock.includes('printHeaderDisclaimer:'))
+    fail('ui.js TR locale must have printHeaderDisclaimer key');
+  pass('printHeaderDisclaimer key in TR locale');
+}
+
+// ── 22. printHeaderTitle key in EN locale ───────────────────────────────────
+{
+  const enBlock = uiSrc.slice(0, uiSrc.indexOf('tr: {'));
+  if (!enBlock.includes('printHeaderTitle:'))
+    fail('ui.js EN locale must have printHeaderTitle key');
+  pass('printHeaderTitle key in EN locale');
+}
+
+// ── 23. printHeaderTitle key in TR locale ───────────────────────────────────
+{
+  const trStart = uiSrc.indexOf('tr: {');
+  const trBlock = uiSrc.slice(trStart);
+  if (!trBlock.includes('printHeaderTitle:'))
+    fail('ui.js TR locale must have printHeaderTitle key');
+  pass('printHeaderTitle key in TR locale');
+}
+
 // ── done ─────────────────────────────────────────────────────────────────────
 console.log(`\nexport checks: ${passed} passed`);
