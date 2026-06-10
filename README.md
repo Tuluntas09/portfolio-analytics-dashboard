@@ -50,7 +50,7 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Data Quality Panel** | Per-symbol data source, provider tag, proxy health, history length audit, and fallback chain status |
 | **Real + Fallback Data** | Finnhub primary → Yahoo Finance history fallback → deterministic mock engine |
 | **Backend Reliability** | Per-route TTL cache, in-flight request deduplication, Finnhub 429 guard with `Retry-After` parsing |
-| **Playwright E2E Tests** | 37 browser tests across two spec files covering core flows, sidebar features, cost basis, date range, benchmark selector, and print/export |
+| **Playwright E2E Tests** | 49 browser tests across three spec files covering core flows, sidebar features, cost basis, date range, benchmark selector, print/export, and mobile responsive behavior |
 | **Non-Advisory Language** | All optimization outputs are labeled as hypothetical model scenarios; no buy/sell signals are generated |
 | **CSV Import / Export** | Import holdings from a CSV file (`ticker,lots`); export current portfolio to CSV |
 | **Saved Portfolios** | Save up to 10 named portfolios to localStorage; load, overwrite, delete, reset |
@@ -218,7 +218,7 @@ npm run test:snapshots    # portfolio daily snapshots (record, prune, calcDeltas
 npm run test:activestate  # active state persistence (save/load/clear, schema validation, round-trip)
 
 # Playwright E2E (Chromium)
-npm run test:e2e          # 37 browser tests — core flows, sidebar features, cost basis, date range, benchmark selector, print/export
+npm run test:e2e          # 49 browser tests — core flows, sidebar features, cost basis, date range, benchmark selector, print/export, mobile responsive
 npm run test:e2e:headed   # same tests with visible browser window
 ```
 
@@ -226,7 +226,7 @@ npm run test:e2e:headed   # same tests with visible browser window
 |---|---|
 | Build validation checks | 17 / 17 pass |
 | Node.js test suites | 24 / 24 pass |
-| Playwright E2E | 37 / 37 pass |
+| Playwright E2E | 49 / 49 pass |
 | Production build | 308 kB JS · 93 kB gzip · 34 modules · 0 warnings |
 
 ---
@@ -286,8 +286,9 @@ portfolio-analytics-dashboard/
 │   └── capture-screenshots.mjs
 │
 ├── tests/e2e/
-│   ├── dashboard.spec.js         Playwright Chromium E2E tests — core flows (19 tests)
-│   └── sidebar-features.spec.js  Playwright Chromium E2E tests — sidebar features (18 tests)
+│   ├── dashboard.spec.js             Playwright Chromium E2E tests — core flows (19 tests)
+│   ├── sidebar-features.spec.js      Playwright Chromium E2E tests — sidebar features (18 tests)
+│   └── mobile-responsive.spec.js     Playwright Chromium E2E tests — mobile 375×812 viewport (12 tests)
 │
 ├── docs/
 │   ├── APP_MIGRATION_AUDIT.md    Phase 6 migration audit and acceptance criteria

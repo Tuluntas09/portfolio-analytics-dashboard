@@ -1169,6 +1169,28 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 
 **Test results:** `npm run test:overview` pass. `npm run test:analysis` pass. `npm run test:app` pass. `npm run build` clean (312 kB / 94 kB gzip / 34 modules / 0 warnings). 37/37 E2E pass. ✓
 
+### 12e — Mobile E2E spec ✓ *Completed 2026-06-10*
+
+**Goal:** Add browser-level regression coverage for the Phase 12a–12d mobile responsive behavior at a real 375×812 phone viewport, so future changes cannot silently break the mobile layout.
+
+**File created:** `tests/e2e/mobile-responsive.spec.js`
+
+Uses `test.use({ viewport: { width: 375, height: 812 } })` to override the project-level Desktop Chrome viewport for this file only. Existing 37 desktop tests are completely unaffected.
+
+**Test groups (12 new tests):**
+
+- **Group A — Mobile shell (3 tests):** App renders without uncaught JS errors; hamburger button is visible and sidebar is closed by default; no full-page horizontal overflow (tolerance: 2 px for sub-pixel rounding).
+- **Group B — Sidebar drawer (3 tests):** Hamburger opens the drawer (`.sidebar--open` class added, backdrop appears); backdrop click closes the drawer; sidebar close button closes the drawer.
+- **Group C — Mobile tab navigation (2 tests):** All 7 tab buttons exist at 375 px; all tabs can be activated via `scrollIntoViewIfNeeded()` + `click()` without a JS error.
+- **Group D — Mobile rendering smoke (2 tests):** Overview tab renders `.kpi-strip` and at least one SVG; Risk tab renders `.card` without crashing.
+- **Group E — Table scroll behavior (2 tests):** First `.tbl-wrap` has computed `overflow-x: auto`/`scroll` and page-level overflow stays within tolerance; table `scrollLeft` changes correctly when content overflows (or accepts fit as-is).
+
+**No app code was changed.** All assertions target selectors already in place from Phase 12a–12d.
+
+**Version invariants:** No schema changes. No formula changes. No proxy changes. No new dependencies. No `playwright.config.js` changes.
+
+**Test results:** 49/49 E2E pass (37 desktop + 12 mobile). `npm run build` clean (312 kB / 94 kB gzip / 34 modules / 0 warnings). All check scripts pass. ✓
+
 ---
 
 ## Dependency Budget
