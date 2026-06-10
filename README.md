@@ -50,6 +50,7 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Data Quality Panel** | Per-symbol data source, provider tag, proxy health, history length audit, and fallback chain status |
 | **Real + Fallback Data** | Finnhub primary → Yahoo Finance history fallback → deterministic mock engine |
 | **Backend Reliability** | Per-route TTL cache, in-flight request deduplication, Finnhub 429 guard with `Retry-After` parsing |
+| **Mobile / Responsive** | Responsive sidebar drawer, mobile topbar/tab navigation, table scroll wrappers, and viewport-aware SVG chart sizing; covered by 375×812 Playwright tests |
 | **Playwright E2E Tests** | 49 browser tests across three spec files covering core flows, sidebar features, cost basis, date range, benchmark selector, print/export, and mobile responsive behavior |
 | **Non-Advisory Language** | All optimization outputs are labeled as hypothetical model scenarios; no buy/sell signals are generated |
 | **CSV Import / Export** | Import holdings from a CSV file (`ticker,lots`); export current portfolio to CSV |
@@ -78,7 +79,7 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **History Fallback** | Yahoo Finance chart API (`/v8/finance/chart`) |
 | **Mock Data** | Deterministic GBM price model with seeded Mulberry32 RNG |
 | **Testing** | 24 Node.js test suites + Playwright Chromium E2E |
-| **Build** | Vite production build — 308 kB JS / 93 kB gzip |
+| **Build** | Vite production build — 314 kB JS / 94 kB gzip |
 | **Security** | Finnhub API key stays server-side; never bundled by Vite or sent to the browser |
 
 ---
@@ -227,7 +228,7 @@ npm run test:e2e:headed   # same tests with visible browser window
 | Build validation checks | 17 / 17 pass |
 | Node.js test suites | 24 / 24 pass |
 | Playwright E2E | 49 / 49 pass |
-| Production build | 308 kB JS · 93 kB gzip · 34 modules · 0 warnings |
+| Production build | 314 kB JS · 94 kB gzip · 34 modules · 0 warnings |
 
 ---
 
@@ -394,6 +395,7 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | Selectable benchmark (VTI / SPY / QQQ / BND) |
 | ✅ Done | localStorage schema migration framework (forward-compatible versioning for all four storage modules) |
 | ✅ Done | Print report polish (print-only header, light-theme override, page layout, non-advisory disclaimer) |
+| ✅ Done | Mobile / responsive polish (drawer sidebar, mobile nav, table scroll, responsive charts, 49 E2E tests) |
 
 ---
 

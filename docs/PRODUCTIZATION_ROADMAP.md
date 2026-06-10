@@ -1100,7 +1100,7 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 
 ---
 
-## Phase 12 — Mobile / Responsive Polish
+## Phase 12 — Mobile / Responsive Polish ✓ *Completed 2026-06-10*
 
 **Goal:** Make the dashboard usable on small viewports without touching financial formulas, localStorage schema, proxy code, or any existing test. Desktop layout (≥901 px) is pixel-identical to v2.1.0 at every step.
 
@@ -1219,6 +1219,70 @@ Uses `test.use({ viewport: { width: 375, height: 812 } })` to override the proje
 **Version invariants:** No schema changes. No formula changes. No proxy changes. No new dependencies. No `playwright.config.js` changes.
 
 **Test results:** 49/49 E2E pass (37 desktop + 12 mobile). `npm run build` clean (312 kB / 94 kB gzip / 34 modules / 0 warnings). All check scripts pass. ✓
+
+---
+
+### 12f — Responsive Release Documentation Reconciliation ✓ *Completed 2026-06-10*
+
+**Goal:** Reconcile README.md and PRODUCTIZATION_ROADMAP.md so the repository accurately reflects the completed Phase 12 mobile/responsive state before moving forward.
+
+**Changes (documentation only — no code, tests, formulas, schema, proxy, or dependency changes):**
+
+**`README.md`:**
+- Tech Stack Build row updated: `308 kB JS / 93 kB gzip` → `314 kB JS / 94 kB gzip`.
+- Results table Production build row updated: `308 kB JS · 93 kB gzip` → `314 kB JS · 94 kB gzip`.
+- Features table: added **Mobile / Responsive** row — "Responsive sidebar drawer, mobile topbar/tab navigation, table scroll wrappers, and viewport-aware SVG chart sizing; covered by 375×812 Playwright tests."
+- Roadmap section: added Phase 12 ✅ Done entry — "Mobile / responsive polish (drawer sidebar, mobile nav, table scroll, responsive charts, 49 E2E tests)."
+- E2E count rows and Project Structure `tests/e2e/` section were already updated in Phase 12e.
+
+**`docs/PRODUCTIZATION_ROADMAP.md`:**
+- Phase 12 section header updated with `✓ *Completed 2026-06-10*`.
+- This Phase 12f entry added.
+
+**Phase 12 final state:**
+
+| Sub-phase | Description | Status |
+|---|---|---|
+| 12a | Sidebar responsive drawer (hamburger, backdrop, close btn) | ✓ |
+| 12b | Mobile topbar stacking + tab nav horizontal scroll | ✓ |
+| 12c | Chart viewport-aware sizing (ResizeObserver hook, `.chart-responsive`) | ✓ |
+| 12d | Table horizontal scroll (`min-width: 600px`, touch scrolling) | ✓ |
+| 12e | Mobile E2E spec (375×812, 12 tests, groups A–E) | ✓ |
+| 12f | Release documentation reconciliation | ✓ |
+
+**Phase 12 final metrics:**
+- Build: **314 kB / 94 kB gzip / 34 modules / 0 warnings**
+- E2E: **49/49 pass** (37 desktop + 12 mobile)
+- Financial formulas: unchanged
+- localStorage schema: unchanged
+- Proxy/server code: unchanged
+- Dependencies added: 0
+
+---
+
+## Phase 13 Candidate — Production Proxy Deployment
+
+**Direction:** Deploy the Node.js market-data proxy to a persistent host (Render / Railway / Fly.io) so the Vercel static demo can serve live Finnhub data without requiring a local proxy running on the user's machine.
+
+**Key considerations:**
+- Free-tier hosts (Render, Railway) impose rate limits and cold-start delays that must be handled gracefully. The existing 429 guard and Yahoo Finance fallback already help.
+- `FINNHUB_API_KEY` stays on the proxy host only — never a Vercel environment variable, never in the browser bundle.
+- CI must be extended to health-check the deployed proxy endpoint.
+- The mock/offline Vercel demo mode must remain functional as a fallback.
+
+**Acceptance target:** Live demo at Vercel URL fetches real prices without the user needing `npm run api`.
+
+---
+
+## Phase 14+ Candidate — Shareable Read-Only Report Link
+
+**Direction:** Generate a compact URL-encoded snapshot of the current portfolio state that renders a read-only view of the analytics when opened by another person.
+
+**Key considerations:**
+- Cost basis data in the URL raises privacy concerns — sharing must be opt-in and the user must be clearly warned about what is included.
+- URL length limits (~2 kB safe budget) constrain how much state can be encoded; holdings + a few key metrics may be the practical ceiling.
+- The read-only view should suppress all editing controls (sidebar, save buttons) and display a clear non-advisory disclaimer.
+- No server-side storage required if state is fully URL-encoded.
 
 ---
 
