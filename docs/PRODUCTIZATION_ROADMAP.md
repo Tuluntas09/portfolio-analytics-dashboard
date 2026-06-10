@@ -1146,6 +1146,29 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 
 **Acceptance:** `npm run build` clean. All 37 E2E pass (desktop viewport unaffected). Desktop layout visually unchanged. ✓
 
+### 12d — Table horizontal scroll ✓ *Completed 2026-06-10*
+
+**Problem:** All data tables used `width: 100%` with no `min-width`. On a 375 px phone the table columns compressed to illegible widths instead of scrolling within their wrapper.
+
+**Finding:** The `Table` component in `src/ui.jsx` already wraps every `<table className="tbl">` in `<div className="tbl-wrap">` with `overflow-x: auto`. All view files (`overview.jsx`, `analysis.jsx`) use the `<Table>` component — no raw `<table>` elements exist. The wrapper and scroll axis were already in place; only the `min-width` and `-webkit-overflow-scrolling` were missing.
+
+**What was added (`src/app.jsx` inline style block):**
+
+- `@media print` block: `.tbl-wrap { overflow: visible; }` added after the existing `.tbl thead th { position: static; }` rule so that full table content prints without being clipped by the wrapper's overflow boundary.
+- Phase 12d section (end of style block):
+  - `.tbl-wrap { -webkit-overflow-scrolling: touch; }` — smooth momentum scroll on iOS Safari.
+  - `.tbl { min-width: 600px; }` — tables maintain a 600 px minimum width; on viewports narrower than 600 px the table scrolls horizontally inside `.tbl-wrap` rather than compressing column content.
+
+**No JSX changes. No view file changes.** The `src/ui.jsx` `Table` component is unchanged; its existing `overflow-x: auto` on `.tbl-wrap` is the scroll mechanism — app.jsx's min-width rule (declared later in the DOM) is what activates it on narrow screens.
+
+**Check scripts updated:**
+- `scripts/overview-check.mjs`: negative assertion — `src/views/overview.jsx` must not contain raw `<table className="tbl">` (bypassing the `<Table>` wrapper would silently remove `.tbl-wrap`).
+- `scripts/analysis-check.mjs`: same negative assertion for `src/views/analysis.jsx`.
+
+**Version invariants:** No schema changes. No formula changes. No proxy changes. No new dependencies.
+
+**Test results:** `npm run test:overview` pass. `npm run test:analysis` pass. `npm run test:app` pass. `npm run build` clean (312 kB / 94 kB gzip / 34 modules / 0 warnings). 37/37 E2E pass. ✓
+
 ---
 
 ## Dependency Budget

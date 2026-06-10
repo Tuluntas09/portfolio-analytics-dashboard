@@ -230,4 +230,11 @@ const analysisSrc = fs.readFileSync(
   }
 }
 
+// ── Phase 12d: No raw unwrapped tables ────────────────────────────────────
+{
+  if (analysisSrc.includes('<table className="tbl"')) {
+    fail('src/views/analysis.jsx must not contain raw <table className="tbl"> — use <Table> component so tbl-wrap is always present');
+  }
+}
+
 console.log("analysis checks passed");

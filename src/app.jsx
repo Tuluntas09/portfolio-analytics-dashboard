@@ -605,6 +605,7 @@ function App() {
           .content { overflow: visible; padding: 12px; }
           .card { page-break-inside: avoid; break-inside: avoid; }
           .tbl thead th { position: static; }
+          .tbl-wrap { overflow: visible; }
           .grid-2-1, .grid-1-2, .grid-2-eq, .opt-cards, .insight-grid { grid-template-columns: 1fr !important; }
           .kpi-strip { grid-template-columns: repeat(3, 1fr) !important; }
           @page { margin: 18mm 14mm; }
@@ -775,6 +776,10 @@ function App() {
           .topbar-right { width: 100%; flex-wrap: wrap; gap: 6px; }
           .head-metric { flex: 1; min-width: calc(50% - 3px); }
         }
+
+        /* ── Phase 12d: Table horizontal scroll ──────────────────────────── */
+        .tbl-wrap { -webkit-overflow-scrolling: touch; }
+        .tbl { min-width: 600px; }
       `}</style>
     </div>
   );

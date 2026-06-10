@@ -208,4 +208,11 @@ const overviewSrc = fs.readFileSync(
   }
 }
 
+// ── Phase 12d: No raw unwrapped tables ────────────────────────────────────
+{
+  if (overviewSrc.includes('<table className="tbl"')) {
+    fail('src/views/overview.jsx must not contain raw <table className="tbl"> — use <Table> component so tbl-wrap is always present');
+  }
+}
+
 console.log("overview checks passed");
