@@ -17,7 +17,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
-import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker } from "./data.js";
+import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker, calcDownsideDev } from "./data.js";
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY } from "./portfolioStorage.js";
 import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
 import { loadSnapshots, recordSnapshot, calcDeltas, exportSnapshots, importSnapshots } from "./portfolioSnapshots.js";
@@ -261,7 +261,8 @@ function App() {
   // apply risk-free assumption to derived stats
   const pAdj = useMemo(() => {
     const sharpe = p.annVol > 0 ? (p.annRet - assumptions.rf) / p.annVol : 0;
-    const sortino = p.annVol > 0 ? (p.annRet - assumptions.rf) / (p.annVol * 0.72) : 0;
+    const downsideDev = calcDownsideDev(p.portRets);
+    const sortino = downsideDev > 0 ? (p.annRet - assumptions.rf) / downsideDev : 0;
     return { ...p, rf: assumptions.rf, sharpe, sortino };
   }, [p, assumptions.rf]);
 

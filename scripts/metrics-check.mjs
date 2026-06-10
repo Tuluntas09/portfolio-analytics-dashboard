@@ -1,4 +1,4 @@
-import { createMarketDataAdapter } from "../src/data.js";
+import { createMarketDataAdapter, calcDownsideDev } from "../src/data.js";
 
 const fail = message => { throw new Error(message); };
 
@@ -79,13 +79,12 @@ function linearHistory(startPrice, endPrice, n) {
   }
 }
 
-// 7. Sortino < Sharpe when annRet < rf (smaller denominator makes negative ratio more negative)
+// 7. Sortino < Sharpe when annRet < rf
+// rf=2.0 (200%) guarantees annRet < rf for any realistic equity mock.
+// GBM mock produces mixed positive/negative daily returns, so downsideDev < annVol
+// strictly, making Sortino more negative than Sharpe.
 {
-  const p = adapter.buildPortfolio([{ t: "AAPL", lots: 10 }], {
-    days: 29, source: "real",
-    historyBySymbol: { AAPL: linearHistory(120, 90, 30) },
-    quoteBySymbol: {}, profileBySymbol: {}, rf: 0.05,
-  });
+  const p = adapter.buildPortfolio([{ t: "AAPL", lots: 10 }], { days: 252, rf: 2.0 });
   if (p.annRet < p.rf && p.sortino >= p.sharpe) {
     fail(`When annRet < rf, Sortino must be less than Sharpe (Sortino=${p.sortino.toFixed(3)}, Sharpe=${p.sharpe.toFixed(3)})`);
   }
@@ -194,6 +193,44 @@ function linearHistory(startPrice, endPrice, n) {
   if (!Number.isFinite(pShort.cvar95)) fail(`Short-history: cvar95 must be finite, got ${pShort.cvar95}`);
   if (pShort.cvar95 !== 0) {
     fail(`Short-history (<20 returns): cvar95 should be 0, got ${pShort.cvar95}`);
+  }
+}
+
+// 16. Sortino uses true downside deviation, not the old 0.72 approximation
+{
+  const p = adapter.buildPortfolio([{ t: "NVDA", lots: 10 }], { days: 252, rf: 0.043 });
+  const oldApproxSortino = p.annVol > 0 ? (p.annRet - p.rf) / (p.annVol * 0.72) : 0;
+  if (Math.abs(p.sortino - oldApproxSortino) < 1e-9) {
+    fail("Sortino should use true downside deviation, not the 0.72 approximation");
+  }
+  if (!Number.isFinite(p.sortino)) fail(`Sortino must be finite, got ${p.sortino}`);
+}
+
+// 17. No-downside guard: monotonically rising path → all returns ≥ 0 → downsideDev = 0 → sortino = 0
+{
+  const p = adapter.buildPortfolio([{ t: "AAPL", lots: 10 }], {
+    days: 9, source: "real",
+    historyBySymbol: { AAPL: linearHistory(100, 130, 10) },
+    quoteBySymbol: {}, profileBySymbol: {},
+  });
+  if (p.sortino !== 0) {
+    fail(`All-positive returns (no downside) should produce sortino=0, got ${p.sortino}`);
+  }
+}
+
+// 18–20. calcDownsideDev helper unit tests
+{
+  const dd1 = calcDownsideDev([0.01, -0.02, 0.03, -0.01]);
+  if (!Number.isFinite(dd1) || dd1 <= 0) {
+    fail(`calcDownsideDev with mixed returns should be finite and positive, got ${dd1}`);
+  }
+  const dd2 = calcDownsideDev([0.01, 0.02, 0.03]);
+  if (dd2 !== 0) {
+    fail(`calcDownsideDev with all-positive returns should return 0, got ${dd2}`);
+  }
+  const dd3 = calcDownsideDev([]);
+  if (dd3 !== 0) {
+    fail(`calcDownsideDev([]) should return 0, got ${dd3}`);
   }
 }
 

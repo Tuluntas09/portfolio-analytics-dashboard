@@ -147,7 +147,8 @@ const src = fs.readFileSync(appPath, "utf8");
 {
   if (!src.includes("buildPortfolio")) fail("src/app.jsx must call buildPortfolio in useMemo");
   if (!src.includes("const pAdj")) fail("src/app.jsx must define pAdj useMemo");
-  if (!src.includes("0.72")) fail("src/app.jsx pAdj must include the sortino 0.72 factor");
+  if (!src.includes("calcDownsideDev")) fail("src/app.jsx pAdj must call calcDownsideDev for true Sortino");
+  if (src.includes("annVol * 0.72")) fail("src/app.jsx must not use the old 0.72 Sortino approximation");
 }
 
 // ── 17. rateLimitWarning detection present in fetch chains ────────────────

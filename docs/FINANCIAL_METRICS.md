@@ -2,7 +2,7 @@
 
 **Project:** Quant Portfolio Analytics Dashboard  
 **Date:** 2026-06-10  
-**Status:** Current through Phase 10b — data-derived beta and empirical CVaR are live; true Sortino (downside deviation) is still an open target (see Phase 4c+ section below)
+**Status:** Current through Phase 11c — data-derived beta, empirical CVaR, and true Sortino (downside deviation) are all live.
 
 This document is a reference for every quantitative metric computed in `src/data.js`.  
 It records the current formula, whether the output is data-derived or approximated,  
@@ -17,7 +17,7 @@ which user assumptions feed into it, known limitations, and what test coverage e
 | Annualized Return | CAGR: `(V_T/V_0)^(252/n) - 1` | Data-derived | Date range (`days`) | No dividend adjustment; uses arithmetic weights not log returns | smoke-check, metrics-check |
 | Annualized Volatility | `sqrt(E[r²]) * sqrt(252)` | Data-derived | None | Second-moment approx (not mean-centered); bias negligible for near-zero daily mean | metrics-check |
 | Sharpe Ratio | `(annRet - rf) / annVol`, 0 if annVol=0 | Data-derived + user rf | `assumptions.rf` | RMS vol not std dev; guarded to 0 for zero-vol paths | smoke-check (rf), metrics-check (zero-vol) |
-| Sortino Ratio | `(annRet - rf) / (annVol × 0.72)`, 0 if annVol=0 | Approximation | `assumptions.rf` | 0.72 proxies downside-std/total-std for normal distributions; not true downside deviation | metrics-check |
+| Sortino Ratio | `(annRet - rf) / dd`, 0 if dd=0; `dd = sqrt(mean(min(r,0)²)) × sqrt(252)` | Data-derived | `assumptions.rf` | T=0 (negative daily returns); n in denominator is total count; annDD ≤ annVol always | metrics-check |
 | Max Drawdown | `min(v/peak - 1)` running peak-trough | Data-derived | None | Daily granularity; intraday drawdowns not captured; bounded in (−1, 0] | metrics-check |
 | VaR (95%, 1M) | `−1.65 × annVol / sqrt(252) × sqrt(21)` | Approximation (parametric) | None | Normality assumption; understates tail risk for fat-tailed returns; 21-day month | metrics-check |
 | CVaR (95%, 1M) | Mean of worst 5% daily returns × sqrt(21) | Data-derived (empirical) | None | Requires ≥20 observations; returns 0 for short/flat paths; sqrt(21) scaling assumes i.i.d. | metrics-check (sign, ≤VaR, zero-vol guard) |
@@ -81,19 +81,27 @@ a declining price path with zero variance would produce −Infinity.
 ### Sortino Ratio
 
 ```
-sortino = (annRet - rf) / (annVol * 0.72)    if annVol > 0, else 0
+dd      = sqrt(sum(min(r_i, 0)^2) / n) * sqrt(252)   // annualized downside deviation
+sortino = (annRet - rf) / dd    if dd > 0, else 0
 ```
 
-The `0.72` constant approximates the ratio of downside standard deviation to total standard deviation
-for a normally distributed return series. For a normal distribution, the theoretical value is
-`1 / sqrt(2) ≈ 0.707`. The value `0.72` is a slightly higher empirical calibration.
+`dd` is the annualized downside deviation computed with **target return T = 0**. Any daily return
+`r_i < 0` contributes `r_i²` to the downside sum; returns ≥ 0 contribute zero. The denominator is
+`n` — the **total** number of finite daily returns, not just the downside count. Using total `n`
+ensures the metric is stable as the number of downside observations approaches zero and produces
+the correct limit of 0 when no downside returns are present.
 
-**True Sortino** would compute the downside deviation directly as `sqrt(mean(min(r - T, 0)²))` where
-`T` is the target return. This approximation is well-established in practice but introduces
-error when returns are skewed or fat-tailed.
+**Why T = 0:** The daily risk-free rate (rf/252 ≈ 0.017%) is negligible relative to typical daily
+return volatility (0.5–2%). Using T = 0 keeps the denominator computation independent of rf and
+avoids compounding approximation errors.
 
-**Relationship with Sharpe:** When `annRet > rf`, `Sortino > Sharpe` (smaller denominator, positive numerator).
-When `annRet < rf`, `Sortino < Sharpe` (smaller denominator, negative numerator — more negative).
+**Relationship with Sharpe:** Because `min(r, 0)² ≤ r²` for all r, `dd ≤ annVol` always holds.
+When `annRet > rf`, Sortino ≥ Sharpe (smaller-or-equal positive denominator gives a larger ratio).
+When `annRet < rf`, Sortino ≤ Sharpe (smaller denominator, negative numerator — more negative).
+Equality holds when all returns are non-positive (dd = annVol) or no downside returns exist (both guarded to 0).
+
+**Guard:** Returns 0 when `dd = 0` (empty return series or no negative returns in the sample).
+This mirrors the `annVol > 0` guard used for Sharpe.
 
 ---
 
@@ -242,9 +250,12 @@ Phase 4a (tests 1–11):
 - Negative-return scenario: annRet < 0, mdd < 0, sharpe finite
 - Max drawdown bounded in (−1, 0]
 - VaR is negative for positive-vol portfolio
-- Sortino > Sharpe when annRet > rf (mathematical identity for 0.72 approximation)
-- Sortino < Sharpe when annRet < rf (same identity)
+- Sortino > Sharpe when annRet > rf (GBM mock with positive excess return; mixed returns ensure dd < annVol strictly)
+- Sortino < Sharpe when annRet < rf (GBM mock with rf=2.0 to guarantee negative excess return; mixed returns ensure strict inequality)
 - Zero-vol guard: flat price path produces finite sharpe, sortino, beta, var95
+- Sortino ≠ old 0.72 proxy for typical seeded mock data (test 16 — verifies true formula is used)
+- All-positive return path → sortino = 0 (no downside returns, dd = 0; test 17)
+- calcDownsideDev helper: finite positive for mixed returns; 0 for all-positive; 0 for empty (tests 18–20)
 - Optimizer: weights sum to 1.0, respect 0.02 floor
 - Rolling metrics: correct array lengths, finite non-negative values
 - benchCum starts at 1, terminal value finite
@@ -261,7 +272,7 @@ Phase 4b (tests 12–15):
 
 | Item | Current | Target | Status |
 |---|---|---|---|
-| Sortino denominator | `annVol × 0.72` proxy | True downside deviation: `sqrt(mean(min(r-T,0)²))` | **Open** |
+| Sortino denominator | `annVol × 0.72` proxy | True downside deviation: `sqrt(mean(min(r,0)²)) × sqrt(252)`, T=0 | **Done — Phase 11c** |
 | Annualized vol | Second moment `E[r²]` | Mean-centered `E[(r-mean)²]` (bias negligible for typical equity daily returns) | Low priority |
 | Rolling return | Arithmetic annualization | CAGR: `(1 + geometric_63d)^(252/63) - 1` | Low priority |
 | Optimizer | Heuristic weight-tilt | True MVO via quadratic programming | Long-term |

@@ -172,6 +172,20 @@ function sampleCov(xs, ys) {
   return xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / (n - 1);
 }
 
+// annualized downside deviation: sqrt(mean(min(r_i, 0)^2)) * sqrt(252), target T=0
+// denominator n = total return count (not downside count) for stability near zero downside
+export function calcDownsideDev(portRets) {
+  if (!Array.isArray(portRets) || portRets.length === 0) return 0;
+  const finiteReturns = portRets.filter(r => Number.isFinite(r));
+  if (finiteReturns.length === 0) return 0;
+  const sumSq = finiteReturns.reduce((s, r) => {
+    const d = Math.min(r, 0);
+    return s + d * d;
+  }, 0);
+  const dd = Math.sqrt(sumSq / finiteReturns.length) * Math.sqrt(252);
+  return Number.isFinite(dd) ? dd : 0;
+}
+
 // data-derived beta: cov(portRets, benchRets) / var(benchRets)
 // fallback 1.0 when n < 20, benchmark variance ≈ 0, or result is not finite
 function calcBeta(portRets, benchRets) {
@@ -375,14 +389,17 @@ export function buildPortfolio(holdings, opts = {}) {
     }
   }
 
+  // true Sortino: downside deviation denominator, T = 0
+  const downsideDev = calcDownsideDev(portRets);
+  const sortino = downsideDev > 0 ? (annRet - rf) / downsideDev : 0;
+
   return {
     assets, totalValue, profile, source, days,
     portRets, cum, benchCum,
     annRet, annVol, sharpe, mdd, rf, hhi,
     rollVol, rollRet, rollSharpe,
     maxSharpe, minRisk,
-    // 0.72 ≈ downside_std/total_std for near-normal distributions; approximates true Sortino denominator
-    sortino: annVol > 0 ? (annRet - rf) / (annVol * 0.72) : 0,
+    sortino,
     beta,
     cvar95,
     var95: -1.65 * annVol / Math.sqrt(252) * Math.sqrt(21), // parametric 95% 1M VaR: z=1.65, horizon=21 trading days, normality assumed
