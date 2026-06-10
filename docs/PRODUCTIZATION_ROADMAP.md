@@ -1075,6 +1075,29 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 
 **Test results:** 37/37 Playwright E2E pass. `npm run test:export` 23/23 pass. `npm run test:app` pass. `npm run test:notes` 35/35 pass. `npm run build` clean (308 kB / 93 kB gzip / 34 modules / 0 warnings).
 
+### 11g — Release-readiness audit and README reconciliation ✓ *Completed 2026-06-10*
+
+**Goal:** Close stale documentation left over from Phases 11a–11f and create the v2.1.0 release tag. No code, formula, schema, proxy, UI, or dependency changes.
+
+**What was done:**
+
+- `README.md` — 9 targeted edits:
+  - Features table: Playwright E2E Tests row updated to 37 tests with extended coverage description.
+  - Tech Stack: Build row updated to 308 kB JS / 93 kB gzip.
+  - Test Suite: `test:e2e` command comment updated to 37 tests.
+  - Results table: Playwright E2E row updated to 37 / 37 pass; Production build row updated to 308 kB / 93 kB.
+  - Project Structure: `tests/e2e/` block updated with `sidebar-features.spec.js` (18 tests) alongside `dashboard.spec.js` (19 tests).
+  - Project Structure: `docs/` block updated with `STORAGE_SCHEMA.md` entry.
+  - Roadmap section: eight new ✅ Done rows added covering Phase 9a–9b, 10a–10b, and 11c–11f features.
+
+- `docs/PRODUCTIZATION_ROADMAP.md` — Phase 11g entry added (this section).
+
+**Version invariants:** SCHEMA_VERSION=1, ACTIVE_STATE_VERSION=1, SNAPSHOT_VERSION=1, BACKUP_VERSION=1. All localStorage key names unchanged.
+
+**Test results:** 37/37 Playwright E2E pass. 24 Node.js test suites pass. `npm run build` clean (308 kB / 93 kB gzip / 34 modules / 0 warnings).
+
+**Acceptance:** README has no stale test counts, build stats, feature gaps, or missing files. All validation suites pass. Release tag v2.1.0 created. ✓
+
 ---
 
 ## Dependency Budget

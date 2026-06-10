@@ -50,7 +50,7 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Data Quality Panel** | Per-symbol data source, provider tag, proxy health, history length audit, and fallback chain status |
 | **Real + Fallback Data** | Finnhub primary → Yahoo Finance history fallback → deterministic mock engine |
 | **Backend Reliability** | Per-route TTL cache, in-flight request deduplication, Finnhub 429 guard with `Retry-After` parsing |
-| **Playwright E2E Tests** | 19 browser tests covering core flows (load, tab navigation, holdings, theme, language, empty state) |
+| **Playwright E2E Tests** | 37 browser tests across two spec files covering core flows, sidebar features, cost basis, date range, benchmark selector, and print/export |
 | **Non-Advisory Language** | All optimization outputs are labeled as hypothetical model scenarios; no buy/sell signals are generated |
 | **CSV Import / Export** | Import holdings from a CSV file (`ticker,lots`); export current portfolio to CSV |
 | **Saved Portfolios** | Save up to 10 named portfolios to localStorage; load, overwrite, delete, reset |
@@ -78,7 +78,7 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **History Fallback** | Yahoo Finance chart API (`/v8/finance/chart`) |
 | **Mock Data** | Deterministic GBM price model with seeded Mulberry32 RNG |
 | **Testing** | 24 Node.js test suites + Playwright Chromium E2E |
-| **Build** | Vite production build — 304 kB JS / 92 kB gzip |
+| **Build** | Vite production build — 308 kB JS / 93 kB gzip |
 | **Security** | Finnhub API key stays server-side; never bundled by Vite or sent to the browser |
 
 ---
@@ -218,7 +218,7 @@ npm run test:snapshots    # portfolio daily snapshots (record, prune, calcDeltas
 npm run test:activestate  # active state persistence (save/load/clear, schema validation, round-trip)
 
 # Playwright E2E (Chromium)
-npm run test:e2e          # 19 browser tests — load, tabs, holdings, theme, language, empty state
+npm run test:e2e          # 37 browser tests — core flows, sidebar features, cost basis, date range, benchmark selector, print/export
 npm run test:e2e:headed   # same tests with visible browser window
 ```
 
@@ -226,8 +226,8 @@ npm run test:e2e:headed   # same tests with visible browser window
 |---|---|
 | Build validation checks | 17 / 17 pass |
 | Node.js test suites | 24 / 24 pass |
-| Playwright E2E | 19 / 19 pass |
-| Production build | 304 kB JS · 92 kB gzip · 34 modules · 0 warnings |
+| Playwright E2E | 37 / 37 pass |
+| Production build | 308 kB JS · 93 kB gzip · 34 modules · 0 warnings |
 
 ---
 
@@ -286,14 +286,16 @@ portfolio-analytics-dashboard/
 │   └── capture-screenshots.mjs
 │
 ├── tests/e2e/
-│   └── dashboard.spec.js         Playwright Chromium E2E tests (19 tests)
+│   ├── dashboard.spec.js         Playwright Chromium E2E tests — core flows (19 tests)
+│   └── sidebar-features.spec.js  Playwright Chromium E2E tests — sidebar features (18 tests)
 │
 ├── docs/
 │   ├── APP_MIGRATION_AUDIT.md    Phase 6 migration audit and acceptance criteria
 │   ├── ARCHITECTURE_AUDIT.md     risk assessment, window-dependency map, resolutions
 │   ├── PRODUCTIZATION_ROADMAP.md phase-by-phase development log
 │   ├── DATA_QUALITY_MODEL.md     data source model and fallback chain
-│   └── FINANCIAL_METRICS.md      metric definitions and model assumptions
+│   ├── FINANCIAL_METRICS.md      metric definitions and model assumptions
+│   └── STORAGE_SCHEMA.md         localStorage key map, schema versions, migration contract
 │
 ├── public/legacy/                preserved reference files (not active runtime)
 │   ├── app.jsx                   former browser root (Babel + UMD era)
@@ -383,6 +385,14 @@ See [DISCLAIMER.md](./DISCLAIMER.md) for the full statement.
 | ✅ Done | Custom date range picker |
 | ✅ Done | Extended ticker support (beyond canonical 15-instrument universe) |
 | ✅ Done | Portfolio notes (plain-text annotation per saved portfolio) |
+| ✅ Done | Cost basis & unrealized P&L (avg. cost, first-bought date, per-asset unrealized P&L and return) |
+| ✅ Done | JSON portfolio backup / restore (full-state export covering holdings, assumptions, notes, saved portfolios, snapshots) |
+| ✅ Done | Portfolio daily snapshots (WoW / MoM / YTD / inception-to-date KPI strip; MiniLine history chart) |
+| ✅ Done | Active state persistence (explicit Save Current State across browser sessions) |
+| ✅ Done | True Sortino ratio (downside deviation replacing 0.72 approximation) |
+| ✅ Done | Selectable benchmark (VTI / SPY / QQQ / BND) |
+| ✅ Done | localStorage schema migration framework (forward-compatible versioning for all four storage modules) |
+| ✅ Done | Print report polish (print-only header, light-theme override, page layout, non-advisory disclaimer) |
 
 ---
 
