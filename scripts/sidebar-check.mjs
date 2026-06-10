@@ -146,4 +146,20 @@ const sidebarSrc = fs.readFileSync(path.join(root, "src", "sidebar.jsx"), "utf8"
   }
 }
 
+// ── 13. Mobile drawer props and classes ───────────────────────────────────
+{
+  if (!sidebarSrc.includes("isOpen")) {
+    fail('src/sidebar.jsx must reference "isOpen" prop for mobile drawer');
+  }
+  if (!sidebarSrc.includes("onClose")) {
+    fail('src/sidebar.jsx must reference "onClose" prop for mobile drawer');
+  }
+  if (!sidebarSrc.includes("sidebar--open")) {
+    fail('src/sidebar.jsx must include "sidebar--open" conditional class');
+  }
+  if (!sidebarSrc.includes("sidebar-close-btn")) {
+    fail('src/sidebar.jsx must include "sidebar-close-btn" close button');
+  }
+}
+
 console.log("sidebar checks passed");

@@ -77,7 +77,8 @@ export function Sidebar(props) {
     onCostBasis,
     onExportBackup, onImportBackup,
     onSaveActiveState, lastActiveSavedAt = null,
-    benchmark = "VTI", setBenchmark } = props;
+    benchmark = "VTI", setBenchmark,
+    isOpen = false, onClose = () => {} } = props;
 
   const [q, setQ] = useStateSB("");
   const [open, setOpen] = useStateSB(false);
@@ -210,7 +211,7 @@ export function Sidebar(props) {
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={"sidebar" + (isOpen ? " sidebar--open" : "")}>
       {/* brand / header */}
       <div className="sb-brand">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -228,6 +229,14 @@ export function Sidebar(props) {
           </button>
           <button className="theme-btn" onClick={toggleTheme} title={t(language, "toggleTheme")} aria-label={t(language, "toggleTheme")}>
             <Icon name={theme === "dark" ? "sun" : "moon"} size={15} />
+          </button>
+          <button
+            className="sidebar-close-btn"
+            type="button"
+            onClick={onClose}
+            aria-label={t(language, "closeSidebar")}
+          >
+            ×
           </button>
         </div>
       </div>

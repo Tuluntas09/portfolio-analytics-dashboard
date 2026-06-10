@@ -112,6 +112,7 @@ function App() {
     const saved = loadActiveState();
     return saved ? saved.savedAt : null;
   });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -412,6 +413,9 @@ function App() {
     window.print();
   }
 
+  const toggleSidebar = () => setSidebarOpen(v => !v);
+  const closeSidebar = () => setSidebarOpen(false);
+
   const empty = holdings.length === 0;
   const tabLabel = id => {
     const found = TABS.find(t => t.id === id);
@@ -451,11 +455,29 @@ function App() {
         onSaveActiveState={handleSaveActiveState}
         lastActiveSavedAt={lastActiveSavedAt}
         benchmark={benchmark}
-        setBenchmark={setBenchmark} />
+        setBenchmark={setBenchmark}
+        isOpen={sidebarOpen}
+        onClose={closeSidebar} />
+
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
 
       <main className="main">
         {/* top bar */}
         <header className="topbar">
+          <button
+            className="hamburger-btn"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={t(language, "openSidebar")}
+          >
+            ☰
+          </button>
           <div className="topbar-title">
             <h1>{tabLabel(tab)}</h1>
             <div className="topbar-sub">
@@ -674,6 +696,84 @@ function App() {
           .kpi-strip { grid-template-columns: repeat(3, 1fr); }
           .src-grid { grid-template-columns: repeat(2, 1fr); }
           .topbar-right .head-metric:last-child { display: none; }
+        }
+
+        /* ── Phase 12a: Mobile sidebar drawer ────────────────────────────── */
+        .hamburger-btn {
+          display: none;
+          padding: 8px 10px;
+          font-size: 18px;
+          background: transparent;
+          border: 1px solid var(--border-soft);
+          border-radius: var(--r-md);
+          color: var(--text-dim);
+          cursor: pointer;
+          flex-shrink: 0;
+          line-height: 1;
+        }
+        .hamburger-btn:hover { color: var(--text); border-color: var(--border); }
+        .sidebar-backdrop { display: none; }
+        .sidebar-close-btn { display: none; }
+
+        @media (max-width: 900px) {
+          .hamburger-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .sidebar {
+            position: fixed;
+            left: -320px;
+            top: 0;
+            height: 100vh;
+            width: 300px;
+            max-width: 86vw;
+            z-index: 200;
+            transition: left 0.25s ease;
+          }
+          .sidebar.sidebar--open { left: 0; }
+          .sidebar-close-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            font-size: 18px;
+            line-height: 1;
+            color: var(--text-dim);
+            background: var(--panel);
+            border: 1px solid var(--border-soft);
+            cursor: pointer;
+          }
+          .sidebar-close-btn:hover { color: var(--text); background: var(--panel-hi); }
+          .sidebar-backdrop {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 199;
+          }
+        }
+
+        @media (min-width: 901px) {
+          .hamburger-btn { display: none; }
+          .sidebar-backdrop { display: none; }
+          .sidebar-close-btn { display: none; }
+          .sidebar { position: static; }
+        }
+
+        /* ── Phase 12b: Tab nav and topbar mobile layout ─────────────────── */
+        @media (max-width: 600px) {
+          .tabnav { white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+          .tabnav::-webkit-scrollbar { display: none; }
+          .tabnav .tab-btn { display: inline-flex; flex-shrink: 0; }
+        }
+
+        @media (max-width: 480px) {
+          .topbar { flex-direction: column; align-items: flex-start; padding: 12px 16px 10px; gap: 8px; }
+          .topbar-right { width: 100%; flex-wrap: wrap; gap: 6px; }
+          .head-metric { flex: 1; min-width: calc(50% - 3px); }
         }
       `}</style>
     </div>

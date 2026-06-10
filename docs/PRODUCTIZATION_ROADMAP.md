@@ -1100,6 +1100,54 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 
 ---
 
+## Phase 12 — Mobile / Responsive Polish
+
+**Goal:** Make the dashboard usable on small viewports without touching financial formulas, localStorage schema, proxy code, or any existing test. Desktop layout (≥901 px) is pixel-identical to v2.1.0 at every step.
+
+**Breakpoints:** 900 px (sidebar drawer), 600 px (tab nav scroll), 480 px (topbar stacking).
+
+### 12a — Sidebar responsive drawer ✓ *Completed 2026-06-10*
+
+**Problem:** Below ≈1000 px the fixed-width sidebar consumed the entire viewport, making the live Vercel demo unusable on phones and tablets.
+
+**What was added:**
+
+- `src/ui.js`: 2 new bilingual i18n keys (EN + TR): `openSidebar`, `closeSidebar`. Full EN/TR parity maintained.
+
+- `src/app.jsx`:
+  - `sidebarOpen` boolean state (default `false`).
+  - `toggleSidebar` / `closeSidebar` handlers.
+  - `isOpen={sidebarOpen}` and `onClose={closeSidebar}` passed to `<Sidebar>`.
+  - Hamburger button (`.hamburger-btn`, `☰`) added as first child of `<header className="topbar">`. Hidden on desktop via `display: none`; becomes `inline-flex` below 900 px.
+  - Conditional backdrop `<div className="sidebar-backdrop">` rendered when `sidebarOpen` is true; `onClick` calls `closeSidebar`.
+  - CSS added to inline `<style>` block: `.hamburger-btn`, `.sidebar-backdrop`, `.sidebar-close-btn` base rules (all `display:none` at desktop); `@media (max-width: 900px)` rule makes sidebar `position:fixed; left:-320px`, slides to `left:0` with `.sidebar--open`, shows backdrop at `z-index:199`, hamburger at visible; `@media (min-width: 901px)` restores `position:static`.
+
+- `src/sidebar.jsx`:
+  - `isOpen = false` and `onClose = () => {}` added to props destructuring.
+  - Root `<aside>` class: `"sidebar" + (isOpen ? " sidebar--open" : "")`.
+  - Close button (`.sidebar-close-btn`, `×`) added inside `.brand-actions` after the theme toggle button. Calls `onClose` on click. Hidden at desktop via CSS; shown as `inline-flex` below 900 px.
+
+- `scripts/sidebar-check.mjs`: 4 new assertions (check 13): `isOpen` present, `onClose` present, `sidebar--open` conditional class present, `sidebar-close-btn` present.
+
+**Constraints preserved:** All existing sidebar content, handlers, and logic unchanged. Print behavior (Phase 11f) unchanged. All 24 Node.js suites pass. All 37 Playwright E2E pass (desktop viewport — sidebar visible by default).
+
+**Acceptance:** `npm run test:sidebar` pass. `npm run test:ui` pass. `npm run test:app` pass. `npm run build` clean (312 kB / 94 kB gzip / 34 modules / 0 warnings). 37/37 E2E pass. ✓
+
+### 12b — Topbar and tab nav mobile layout ✓ *Completed 2026-06-10*
+
+**Problem:** At ≤600 px the 7-tab nav could wrap or overflow without scroll; at ≤480 px the topbar metric cards and title were cramped side-by-side.
+
+**What was added (CSS-only, in `src/app.jsx` inline style block):**
+
+- `@media (max-width: 600px)`: `.tabnav` gains `white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch` for smooth horizontal scroll; `::-webkit-scrollbar { display: none }` hides scrollbar; `.tab-btn` gets `display: inline-flex; flex-shrink: 0` to prevent tab shrinking.
+- `@media (max-width: 480px)`: `.topbar` stacks vertically (`flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px 10px`); `.topbar-right` wraps (`flex-wrap: wrap; width: 100%`); `.head-metric` cards fill the row in a 2-up layout (`flex: 1; min-width: calc(50% - 3px)`).
+
+**No JSX changes.** No logic changes. No new i18n keys. Existing 1180 px media query untouched.
+
+**Acceptance:** `npm run build` clean. All 37 E2E pass (desktop viewport unaffected). Desktop layout visually unchanged. ✓
+
+---
+
 ## Dependency Budget
 
 To remain suitable for GitHub portfolio display and easy setup, the project should

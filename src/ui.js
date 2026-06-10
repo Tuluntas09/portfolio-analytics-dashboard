@@ -145,6 +145,8 @@ export const I18N = {
     activeStateSaved: "Current state saved",
     activeStateLastSaved: "Last saved:",
     activeStateNeverSaved: "Not saved yet",
+    openSidebar: "Open sidebar",
+    closeSidebar: "Close sidebar",
   },
   tr: {
     language: "Dil",
@@ -260,6 +262,8 @@ export const I18N = {
     activeStateSaved: "Geçerli durum kaydedildi",
     activeStateLastSaved: "Son kayıt:",
     activeStateNeverSaved: "Henüz kaydedilmedi",
+    openSidebar: "Kenar çubuğunu aç",
+    closeSidebar: "Kenar çubuğunu kapat",
   },
 };
 
