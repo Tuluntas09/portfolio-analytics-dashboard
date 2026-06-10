@@ -1,10 +1,10 @@
 # Financial Metrics Reference
 
 **Project:** Quant Portfolio Analytics Dashboard  
-**Date:** 2026-06-06  
-**Phase:** 4b — Data-Derived Beta and Empirical CVaR
+**Date:** 2026-06-10  
+**Status:** Current through Phase 10b — data-derived beta and empirical CVaR are live; true Sortino (downside deviation) is still an open target (see Phase 4c+ section below)
 
-This document is a reference for every quantitative metric computed in `data.jsx`.  
+This document is a reference for every quantitative metric computed in `src/data.js`.  
 It records the current formula, whether the output is data-derived or approximated,  
 which user assumptions feed into it, known limitations, and what test coverage exists.
 
@@ -257,11 +257,11 @@ Phase 4b (tests 12–15):
 
 ---
 
-## Phase 4c+ Targets
+## Open Improvement Targets
 
-| Item | Current | Target |
-|---|---|---|
-| Sortino denominator | `annVol × 0.72` proxy | True downside deviation: `sqrt(mean(min(r-T,0)²))` |
-| Annualized vol | Second moment `E[r²]` | Mean-centered `E[(r-mean)²]` (bias negligible) |
-| Rolling return | Arithmetic annualization | CAGR: `(1 + geometric_63d)^(252/63) - 1` |
-| Optimizer | Heuristic tilt | True MVO via quadratic programming |
+| Item | Current | Target | Status |
+|---|---|---|---|
+| Sortino denominator | `annVol × 0.72` proxy | True downside deviation: `sqrt(mean(min(r-T,0)²))` | **Open** |
+| Annualized vol | Second moment `E[r²]` | Mean-centered `E[(r-mean)²]` (bias negligible for typical equity daily returns) | Low priority |
+| Rolling return | Arithmetic annualization | CAGR: `(1 + geometric_63d)^(252/63) - 1` | Low priority |
+| Optimizer | Heuristic weight-tilt | True MVO via quadratic programming | Long-term |

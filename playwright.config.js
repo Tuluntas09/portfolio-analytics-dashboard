@@ -6,11 +6,11 @@ const DEV_URL = "http://127.0.0.1:8502";
 export default defineConfig({
   testDir: "./tests/e2e",
 
-  // Each test gets up to 60 s: Babel Standalone transpiles 7 JSX files via XHR
-  // on first load, which can add several seconds beyond Vite's own startup.
+  // Each test gets up to 60 s. Generous timeout for Vite dev-server cold-start
+  // and React mount latency, particularly in CI where the server starts fresh.
   timeout: 60_000,
 
-  // Assertion timeout — generous to account for React + Babel mount latency.
+  // Assertion timeout — generous to account for Vite dev-server and React mount latency.
   expect: { timeout: 15_000 },
 
   // Run tests sequentially to avoid port contention and reduce noise.

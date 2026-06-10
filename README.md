@@ -58,6 +58,10 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Custom Date Range** | User-controlled analysis window with two date pickers and client-side validation |
 | **Extended Tickers** | Add valid tickers beyond the canonical 15-instrument universe; synthetic GBM fallback until real data loads |
 | **Portfolio Notes** | 500-character plain-text annotation saved with each named portfolio |
+| **Cost Basis & Unrealized P&L** | Per-holding average cost and first-bought date; unrealized P&L and unrealized return per asset; portfolio-level cost basis and unrealized P&L summary strip |
+| **JSON Backup / Restore** | Full-state JSON export covering holdings, assumptions, notes, saved portfolios, and snapshots; one-click restore on any device |
+| **Portfolio Snapshots** | Daily portfolio value recorded in live-data sessions; WoW / MoM / YTD / inception-to-date delta KPI strip in the Overview tab |
+| **Active State Persistence** | Explicit Save Current State action persists working holdings, assumptions, and notes across browser sessions |
 
 ---
 
@@ -73,8 +77,8 @@ The app covers the full decision-flow of a multi-asset portfolio review: value a
 | **Market Data** | Finnhub REST API (quotes, candles, profile, news) |
 | **History Fallback** | Yahoo Finance chart API (`/v8/finance/chart`) |
 | **Mock Data** | Deterministic GBM price model with seeded Mulberry32 RNG |
-| **Testing** | 20 Node.js script test suites + Playwright Chromium E2E |
-| **Build** | Vite production build — 286 kB JS / 88 kB gzip |
+| **Testing** | 24 Node.js test suites + Playwright Chromium E2E |
+| **Build** | Vite production build — 304 kB JS / 92 kB gzip |
 | **Security** | Finnhub API key stays server-side; never bundled by Vite or sent to the browser |
 
 ---
@@ -186,7 +190,7 @@ Get a free key at [finnhub.io](https://finnhub.io).
 ```bash
 # Build and build output validation (run together)
 npm run build             # Vite production bundle → dist/
-npm run test:build        # validate dist/ structure, forbidden refs, bundle size ceilings
+npm run test:build        # validate dist/ structure, forbidden refs, bundle size ceilings (17 checks)
 
 # Node.js source-analysis and integration tests
 npm run test:smoke        # index.html entry point, adapter exports, tab order
@@ -208,6 +212,10 @@ npm run test:export       # Print Report button and @media print behavior
 npm run test:daterange    # custom date range picker validation helpers
 npm run test:universe     # extended ticker support (isValidTicker, DEFAULT_GBM, buildPortfolio)
 npm run test:notes        # portfolio notes (save/load/reset, backward compat, 500-char cap)
+npm run test:costbasis    # cost basis inputs (avgCost, firstBought), unrealized P&L, portfolio aggregates
+npm run test:backup       # JSON backup/restore round-trip, version guard, snapshot integration
+npm run test:snapshots    # portfolio daily snapshots (record, prune, calcDeltas, backup integration)
+npm run test:activestate  # active state persistence (save/load/clear, schema validation, round-trip)
 
 # Playwright E2E (Chromium)
 npm run test:e2e          # 19 browser tests — load, tabs, holdings, theme, language, empty state
@@ -216,10 +224,10 @@ npm run test:e2e:headed   # same tests with visible browser window
 
 | Metric | Result |
 |---|---|
-| Build validation checks | 15 / 15 pass |
-| Node.js test suites | 20 / 20 pass |
+| Build validation checks | 17 / 17 pass |
+| Node.js test suites | 24 / 24 pass |
 | Playwright E2E | 19 / 19 pass |
-| Production build | 286 kB JS · 88 kB gzip · 31 modules · 0 warnings |
+| Production build | 304 kB JS · 92 kB gzip · 34 modules · 0 warnings |
 
 ---
 
@@ -235,6 +243,12 @@ portfolio-analytics-dashboard/
 │   ├── ui.jsx                    shared React components
 │   ├── charts.jsx                custom SVG chart primitives
 │   ├── sidebar.jsx               control panel, holdings input, search
+│   ├── holdingsCsv.js            CSV import/export logic
+│   ├── dateUtils.js              date range validation helpers
+│   ├── portfolioStorage.js       named saved portfolios (localStorage)
+│   ├── portfolioBackup.js        JSON full-state backup/restore
+│   ├── portfolioSnapshots.js     daily portfolio value snapshots
+│   ├── activePortfolioState.js   active working state persistence
 │   └── views/
 │       ├── overview.jsx          Overview tab, Risk tab
 │       └── analysis.jsx          Optimization, Simulation, Analysis,
@@ -257,7 +271,19 @@ portfolio-analytics-dashboard/
 │   ├── sidebar-check.mjs
 │   ├── overview-check.mjs
 │   ├── analysis-check.mjs
-│   └── app-check.mjs
+│   ├── app-check.mjs
+│   ├── build-check.mjs
+│   ├── portfolio-storage-check.mjs
+│   ├── csv-check.mjs
+│   ├── export-check.mjs
+│   ├── date-range-check.mjs
+│   ├── universe-check.mjs
+│   ├── notes-check.mjs
+│   ├── cost-basis-check.mjs
+│   ├── backup-check.mjs
+│   ├── snapshot-check.mjs
+│   ├── active-state-check.mjs
+│   └── capture-screenshots.mjs
 │
 ├── tests/e2e/
 │   └── dashboard.spec.js         Playwright Chromium E2E tests (19 tests)

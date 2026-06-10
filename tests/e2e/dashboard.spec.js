@@ -1,6 +1,6 @@
 /**
  * dashboard.spec.js — browser-level smoke tests for the Quant Portfolio Analytics
- * Dashboard (Phase 6a).
+ * Dashboard (Phase 6 onward).
  *
  * Scope:
  *   - App loads and all 7 tabs are navigable.
@@ -13,15 +13,11 @@
  *   - No assertions on exact numeric values, chart SVG paths, or pixel positions.
  *   - No dependency on a live Finnhub API key.
  *   - Tests pass in mock/offline mode (proxy not required).
- *
- * Timing note:
- *   Babel Standalone transpiles all 7 JSX files via XHR before React mounts.
- *   The APP_TIMEOUT constant allows for this cold-start latency.
  */
 
 import { test, expect } from "@playwright/test";
 
-// How long to wait for the React app to fully mount after Babel transpilation.
+// Generous timeout to accommodate Vite dev-server cold start and React mount latency.
 const APP_TIMEOUT = 30_000;
 
 // Pre-load localStorage before each test page navigation so the app starts in
@@ -49,7 +45,7 @@ test("app loads without uncaught JavaScript errors", async ({ page }) => {
   await page.goto("/");
   await page.waitForSelector(".app", { timeout: APP_TIMEOUT });
 
-  // Brief settle: Babel may enqueue micro-task warnings after initial render.
+  // Brief settle: allow any deferred React micro-tasks to complete before checking errors.
   await page.waitForTimeout(500);
 
   if (errors.length > 0) {
