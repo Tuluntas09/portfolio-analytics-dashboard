@@ -149,58 +149,118 @@ Browser
                                 └── Yahoo Finance (fallback — no key needed)
 ```
 
+### Why not Vercel Serverless Functions?
+
+Moving the proxy into a Vercel Serverless Function (`/api/*.js`) is tempting because it eliminates the separate backend host. However, it is **not suitable** for this proxy:
+
+- The proxy's in-memory TTL cache (`server/cache.mjs`) does not survive across serverless function invocations. Each invocation starts with an empty cache.
+- Without caching, a 5-ticker portfolio load triggers ~25 upstream Finnhub calls per page load. The Finnhub free tier allows 60 requests/minute — a single load consumes nearly half the per-minute budget.
+- The in-flight deduplication (prevents concurrent identical requests from each making a separate upstream call) also requires process-local state that serverless cannot provide.
+
+**Use a persistent Node.js service (Option C below) to keep the in-memory cache working.**
+
+---
+
 ### Step 1 — Deploy the proxy
 
-Deploy `server/market-data-server.mjs` as a **Node.js web service** on any platform that supports persistent Node.js processes.
+Deploy `server/market-data-server.mjs` as a **persistent Node.js web service**.
 
-**Example platforms:**
+**Recommended platforms:**
 
-| Platform | Free tier | Notes |
+| Platform | Free tier | Cold start | Notes |
+|---|---|---|---|
+| [Render](https://render.com) | Yes (spins down after ~15 min idle) | ~30 s | Easiest setup; `PORT` auto-injected |
+| [Railway](https://railway.app) | Yes (usage-based credits) | None | Always-on; slightly more setup |
+| [Fly.io](https://fly.io) | Yes (3 shared VMs) | None | Docker-based; most control |
+
+#### Render step-by-step
+
+1. Go to [render.com](https://render.com) and create a free account.
+2. Click **New → Web Service**.
+3. Connect your GitHub repository (`Tuluntas09/portfolio-analytics-dashboard`).
+4. Configure the service:
+   - **Name:** `portfolio-analytics-proxy` (or any name)
+   - **Runtime:** Node
+   - **Build command:** *(leave blank — no build step)*
+   - **Start command:** `node server/market-data-server.mjs`
+   - **Instance type:** Free
+5. Under **Environment Variables**, add:
+
+| Variable | Value | Notes |
 |---|---|---|
-| [Render](https://render.com) | Yes (spins down after ~15 min idle) | Web Service → Node, start command below |
-| [Railway](https://railway.app) | Yes (usage-based credits) | Good for persistent Node services |
-| [Fly.io](https://fly.io) | Yes | Docker-based, more control |
+| `FINNHUB_API_KEY` | Your Finnhub API key | Required for live data — stays on proxy host only |
+| `MARKET_DATA_HOST` | `0.0.0.0` | Required — allows Render to route external traffic |
+| `CORS_ORIGIN` | `https://your-project.vercel.app` | Required — your Vercel frontend URL |
 
-**Start command for the proxy host:**
-```
-node server/market-data-server.mjs
-```
+> `PORT` is injected automatically by Render. The proxy reads `PORT` before falling back to `8787`.
 
-**Environment variables to set on the proxy host:**
+6. Click **Create Web Service**. Render will deploy and give you a URL like `https://portfolio-analytics-proxy.onrender.com`.
 
-| Variable | Value | Required |
-|---|---|---|
-| `FINNHUB_API_KEY` | Your Finnhub API key | Yes |
-| `MARKET_DATA_HOST` | `0.0.0.0` | Yes — allows the host to accept external connections |
-| `PORT` or `MARKET_DATA_PORT` | Set by platform automatically, or specify `8787` | Platform-dependent |
+#### Environment variables reference
 
-> Most platforms (Render, Railway, Fly.io) inject `PORT` automatically. The proxy reads `MARKET_DATA_PORT` first, then `PORT`, then defaults to `8787`.
+| Variable | Where to set | Value | Required |
+|---|---|---|---|
+| `FINNHUB_API_KEY` | Proxy host env | Your Finnhub key | Yes |
+| `MARKET_DATA_HOST` | Proxy host env | `0.0.0.0` | Yes (for external connections) |
+| `CORS_ORIGIN` | Proxy host env | Your Vercel URL (e.g. `https://your-project.vercel.app`) | Yes (for deployed frontend) |
+| `PORT` or `MARKET_DATA_PORT` | Set by platform automatically | — | Platform-dependent |
+
+> **`CORS_ORIGIN` is not a secret.** It is your frontend's public URL. Do **not** add `FINNHUB_API_KEY` to Vercel. Do **not** add `VITE_FINNHUB_API_KEY` anywhere — the Finnhub key must never reach the browser.
+
+---
 
 ### Step 2 — Configure the Vercel frontend
 
-On your Vercel project, add one build-time environment variable:
+On your Vercel project, go to **Settings → Environment Variables** and add:
 
-| Variable | Value |
-|---|---|
-| `VITE_API_BASE_URL` | `https://your-deployed-proxy.onrender.com` (your actual proxy URL) |
+| Variable | Value | Notes |
+|---|---|---|
+| `VITE_API_BASE_URL` | `https://your-proxy.onrender.com` | Not a secret; baked into the bundle at build time |
 
-> **`VITE_API_BASE_URL` is not a secret.** It is simply the public URL of your proxy. Do **not** add `FINNHUB_API_KEY` to Vercel. Do **not** add `VITE_FINNHUB_API_KEY` anywhere — the Finnhub key must never reach the browser.
+After adding the variable, **redeploy the Vercel frontend** so it picks up the new build-time value. Without redeployment, the bundle still points to `http://127.0.0.1:8787`.
 
-After setting the variable, redeploy the Vercel frontend so it picks up the new build-time value.
+> If `VITE_API_BASE_URL` is absent, the static Vercel demo continues to run in mock/offline mode — unchanged from Option A. This is intentional and ensures the demo is always functional even when the proxy is unavailable.
+
+---
+
+### Step 3 — Validate the deployment
+
+Run through this checklist after deployment and before announcing live-data mode:
+
+- [ ] `GET https://your-proxy.onrender.com/api/health` returns `{ ok: true, hasFinnhubKey: true }`
+- [ ] Response header `Access-Control-Allow-Origin` equals your Vercel URL (not `*`)
+- [ ] Vercel frontend redeployed with `VITE_API_BASE_URL` set
+- [ ] Open the dashboard → sidebar shows **Proxy ready** and **Real Prices**
+- [ ] Navigate to the Data tab → verify "Symbol data sources" shows Finnhub or Yahoo providers (not Mock)
+- [ ] Check `/api/health` again → `cacheHits` increasing on repeated loads confirms cache is working
+- [ ] Open the original static demo URL (the one **without** `VITE_API_BASE_URL` configured) → sidebar still shows **Mock Prices** — confirms the fallback is intact
+
+---
 
 ### Expected behavior after deployment
 
 | Scenario | What the frontend does |
 |---|---|
-| Proxy is reachable and has a valid key | Fetches real Finnhub quotes, history, and news. `marketDataStatus` pill shows **Real Prices**. |
-| Proxy is reachable but key is missing | Proxy returns 503. Frontend falls back to mock data for price history. |
-| Proxy is cold-starting (Render free tier) | Health check times out. Frontend falls back to mock data. Once the proxy warms up (~30 s), a page reload shows live data. |
-| Proxy is unreachable | Health check fails. Frontend runs entirely on deterministic mock data. All tabs remain functional. |
+| Proxy reachable, valid key | Fetches real Finnhub quotes, history, and news. Badge shows **Real Prices**. |
+| Proxy reachable, key missing | Proxy returns 503. Frontend falls back to mock data. Badge shows **Mock Prices**. |
+| Proxy cold-starting (Render free tier) | Health check times out. Frontend falls back to mock data. Once proxy warms up (~30 s), a page reload shows live data. In-memory cache resets on each cold start. |
+| Proxy unreachable | Health check fails. Frontend runs on deterministic mock data. All tabs remain functional. |
 | Finnhub 429 rate limit | Yahoo Finance fallback used for history. Rate-limit banner shown in the frontend. |
+| `CORS_ORIGIN` misconfigured | Browser receives a CORS error. Frontend falls back to mock data. Fix: correct `CORS_ORIGIN` on proxy host and restart service. |
 
-### Rate-limit notes
+---
 
-The Finnhub free tier allows 60 requests/minute. A portfolio load with 5 tickers triggers up to 20 upstream calls (history + quote + profile + news per ticker). The proxy TTL cache (30 min for history, 60 s for quotes) means repeated reloads within the TTL window make zero upstream calls.
+### Risk notes
+
+**Finnhub free-tier rate limits:** The free tier allows 60 requests/minute. A portfolio load with 5 tickers triggers up to 25 upstream calls (history + quote + profile + news per ticker). The proxy TTL cache (30 min for history, 60 s for quotes) means repeated reloads within the TTL window make zero upstream calls. Only the first load after a cold start is affected.
+
+**Cold starts on Render free tier:** If no requests arrive for ~15 minutes, Render spins down the service. The next request wakes it up, but the first health check may time out (~30 s). The frontend handles this gracefully by falling back to mock data; a page reload after the proxy warms up will show live data.
+
+**CORS misconfiguration:** If `CORS_ORIGIN` is set to a wrong URL, the frontend will silently fall back to mock data (the CORS error is browser-side; the proxy still returns data to non-browser callers like `curl`). Check the response header with browser DevTools → Network → any `/api/*` request → `Access-Control-Allow-Origin`.
+
+**Key rotation:** To rotate the Finnhub API key, update `FINNHUB_API_KEY` on the proxy host and restart the service. No Vercel redeployment needed. The frontend never holds the key. Old cached responses in the proxy will expire within their TTL window (max 12 h for company profiles).
+
+**Public demo traffic:** If the public Vercel URL receives significant traffic and all requests hit the deployed proxy, the Finnhub free-tier quota (60 req/min) may be exhausted. The proxy cache significantly reduces upstream calls for repeat visitors within the TTL window. For high-traffic scenarios, consider upgrading to a paid Finnhub plan or restricting `CORS_ORIGIN` to only your personal deployment URL.
 
 ---
 
@@ -213,6 +273,7 @@ The Finnhub free tier allows 60 requests/minute. A portfolio load with 5 tickers
 | `FINNHUB_API_KEY` not a Vercel env var | ✅ — must never be added to Vercel |
 | `VITE_FINNHUB_API_KEY` does not exist | ✅ — never add this; it would expose the key to the bundle |
 | `VITE_API_BASE_URL` is not a secret | ✅ — public proxy URL only; safe as a Vercel build var |
+| `CORS_ORIGIN` restricts cross-origin access in production | ✅ — `resolveCorsOrigin()` never returns `*`; falls back to localhost |
 | `.env.example` contains only empty placeholders | ✅ |
 | `dist/` contains no server-side code | ✅ — `build.copyPublicDir: false` |
 | Proxy defaults to loopback-only binding locally | ✅ — `MARKET_DATA_HOST` defaults to `127.0.0.1` |
@@ -229,5 +290,5 @@ npm run preview      # Serve dist/ locally at http://127.0.0.1:8502
 
 Production build output (React 18.3.1):
 - `dist/index.html` — ~6.5 kB
-- `dist/assets/index-*.js` — ~286 kB raw / ~88 kB gzip
+- `dist/assets/index-*.js` — ~314 kB raw / ~94 kB gzip
 - No legacy JSX files, no server code, no secrets

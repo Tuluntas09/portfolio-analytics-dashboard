@@ -1260,17 +1260,63 @@ Uses `test.use({ viewport: { width: 375, height: 812 } })` to override the proje
 
 ---
 
-## Phase 13 Candidate — Production Proxy Deployment
+## Phase 13 — Production Proxy CORS Hardening ✓ *Completed 2026-06-10*
 
-**Direction:** Deploy the Node.js market-data proxy to a persistent host (Render / Railway / Fly.io) so the Vercel static demo can serve live Finnhub data without requiring a local proxy running on the user's machine.
+**Goal:** Make the existing Node.js market-data proxy safe for optional cloud deployment by replacing the open CORS wildcard (`"*"`) with a request-origin-aware policy, and by documenting the complete Render deployment flow.
 
-**Key considerations:**
-- Free-tier hosts (Render, Railway) impose rate limits and cold-start delays that must be handled gracefully. The existing 429 guard and Yahoo Finance fallback already help.
-- `FINNHUB_API_KEY` stays on the proxy host only — never a Vercel environment variable, never in the browser bundle.
-- CI must be extended to health-check the deployed proxy endpoint.
-- The mock/offline Vercel demo mode must remain functional as a fallback.
+### 13a — CORS origin policy (`server/market-data-server.mjs`) ✓
 
-**Acceptance target:** Live demo at Vercel URL fetches real prices without the user needing `npm run api`.
+Added `resolveCorsOrigin(reqOrigin)` helper function. Precedence:
+
+1. `CORS_ORIGIN` env var — set this on all production proxy hosts
+2. Request origin, if it matches the local development allowlist (`http://localhost:5173`, `http://127.0.0.1:5173`, `http://localhost:8502`, `http://127.0.0.1:8502`)
+3. `http://localhost:5173` fallback for local convenience
+
+`"*"` is intentionally never returned. A production host without `CORS_ORIGIN` set will send a localhost origin header, causing a visible browser CORS error rather than silent wide-open access.
+
+Per-request CORS resolution: the HTTP handler now computes `corsOrigin = resolveCorsOrigin(req.headers.origin)` once per request and passes it to all responses via a scoped `reply()` helper. No request data is logged; `FINNHUB_API_KEY` is never logged or returned.
+
+**Startup warning:** `NODE_ENV=production` and `CORS_ORIGIN` unset → `[proxy] WARNING` line printed on startup.
+
+### 13b — Environment documentation (`.env.example`) ✓
+
+Added `CORS_ORIGIN=` variable with comments explaining:
+- Local development: automatic allowlist; no setting needed
+- Production: must be set to the Vercel deployment URL
+- `CORS_ORIGIN` is NOT a secret; it is a public URL
+- `VITE_FINNHUB_API_KEY` must never be created; `FINNHUB_API_KEY` belongs on the proxy host only
+
+### 13c — Deployment documentation (`docs/DEPLOYMENT.md`) ✓
+
+Option C section expanded with:
+- Why serverless functions are not suitable (in-memory cache incompatibility)
+- Complete Render step-by-step deployment instructions
+- Updated env vars table including `CORS_ORIGIN`
+- Step 3: manual validation checklist (health endpoint, CORS header check, Real Prices badge, static demo fallback verification)
+- Risk notes: Finnhub rate limits, Render cold starts, CORS misconfiguration recovery, key rotation
+- Security checklist updated with `CORS_ORIGIN` row
+- Build reference updated to 314 kB / 94 kB gzip
+
+### Invariants preserved
+
+- All 49 E2E tests pass unchanged (tests run in mock mode; CORS is irrelevant)
+- `FINNHUB_API_KEY` never appears in any browser-facing response, bundle, or env var list
+- `VITE_FINNHUB_API_KEY` does not exist anywhere in the codebase
+- `.env.example` contains only empty placeholder values
+- Static Vercel demo continues to run in mock/offline mode (no proxy required, `VITE_API_BASE_URL` not set)
+- Local `npm run api` works without `CORS_ORIGIN` set — localhost origins are allowed automatically
+- No financial formulas changed; no localStorage schema changed; no mobile/responsive work changed
+- No npm dependencies added
+
+### Phase 13 metrics
+
+| Metric | Value |
+|---|---|
+| Build | 314 kB / 94 kB gzip / 34 modules / 0 warnings |
+| E2E | 49/49 pass |
+| Proxy CORS | `resolveCorsOrigin()` — env var, localhost allowlist, no wildcard |
+| Proxy code lines changed | ~35 (no logic changes; only CORS header resolution) |
+| Deployment docs | Complete Render walkthrough + validation checklist in `docs/DEPLOYMENT.md` |
 
 ---
 

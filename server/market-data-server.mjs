@@ -8,6 +8,29 @@ const YAHOO_CHART_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart"
 const DEFAULT_TIMEOUT_MS = 10000;
 let localSecretsLoaded = false;
 
+// Resolve the CORS Allow-Origin value for a given request origin.
+// Precedence:
+//   1. CORS_ORIGIN env var — set this on all production proxy hosts
+//   2. Request origin, if it matches a known local development origin
+//   3. http://localhost:5173 as a safe local development fallback
+// "*" is intentionally never returned. Production hosts that forget to set
+// CORS_ORIGIN will receive a localhost origin rather than a wildcard — this
+// causes a visible browser CORS error instead of silent wide-open access.
+function resolveCorsOrigin(reqOrigin) {
+  const configured = process.env.CORS_ORIGIN;
+  if (configured) return configured;
+
+  const localOrigins = new Set([
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8502",
+    "http://127.0.0.1:8502",
+  ]);
+
+  if (reqOrigin && localOrigins.has(reqOrigin)) return reqOrigin;
+  return "http://localhost:5173";
+}
+
 function parseSecretValue(line, key) {
   const match = line.match(new RegExp(`^\\s*${key}\\s*=\\s*(.+?)\\s*$`, "i"));
   if (!match) return "";
@@ -44,10 +67,10 @@ function getFinnhubKey() {
   return process.env.FINNHUB_API_KEY || "";
 }
 
-function sendJson(res, statusCode, payload) {
+function sendJson(res, statusCode, payload, corsOrigin) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": corsOrigin !== undefined ? corsOrigin : resolveCorsOrigin(null),
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Cache-Control": "no-store",
@@ -323,18 +346,22 @@ export function createMarketDataServer() {
   const cache = createCache();
 
   return http.createServer(async (req, res) => {
+    const reqOrigin = req.headers.origin || null;
+    const corsOrigin = resolveCorsOrigin(reqOrigin);
+    const reply = (statusCode, payload) => sendJson(res, statusCode, payload, corsOrigin);
+
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
     if (req.method === "OPTIONS") {
-      return sendJson(res, 204, {});
+      return reply(204, {});
     }
 
     if (req.method !== "GET") {
-      return sendJson(res, 405, { ok: false, error: "Method not allowed" });
+      return reply(405, { ok: false, error: "Method not allowed" });
     }
 
     if (url.pathname === "/api/health") {
-      return sendJson(res, 200, {
+      return reply(200, {
         ok: true,
         service: "market-data-proxy",
         hasFinnhubKey: Boolean(getFinnhubKey()),
@@ -351,14 +378,14 @@ export function createMarketDataServer() {
 
     const symbol = validateSymbol(url.searchParams.get("symbol"));
     if (!symbol) {
-      return sendJson(res, 400, { ok: false, error: "Valid symbol query parameter is required" });
+      return reply(400, { ok: false, error: "Valid symbol query parameter is required" });
     }
 
     if (url.pathname === "/api/market/quote") {
       const key = cache.cacheKey("quote", { symbol });
       const { statusCode, payload, cacheStatus, cachedAt, ttlSeconds } =
         await cache.getOrFetch(key, () => fetchFinnhub("/quote", { symbol }), TTL_MS.QUOTE);
-      return sendJson(res, statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
+      return reply(statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
     }
 
     if (url.pathname === "/api/market/candles") {
@@ -372,7 +399,7 @@ export function createMarketDataServer() {
           from: dateToUnix(fromDate),
           to: dateToUnix(toDate),
         }), TTL_MS.CANDLES);
-      return sendJson(res, statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
+      return reply(statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
     }
 
     if (url.pathname === "/api/market/history") {
@@ -381,14 +408,14 @@ export function createMarketDataServer() {
       const key = cache.cacheKey("history", { symbol, from: fromDate, to: toDate });
       const { statusCode, payload, cacheStatus, cachedAt, ttlSeconds } =
         await cache.getOrFetch(key, () => fetchHistoricalPrices(symbol, fromDate, toDate), TTL_MS.HISTORY);
-      return sendJson(res, statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
+      return reply(statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
     }
 
     if (url.pathname === "/api/company/profile") {
       const key = cache.cacheKey("profile", { symbol });
       const { statusCode, payload, cacheStatus, cachedAt, ttlSeconds } =
         await cache.getOrFetch(key, () => fetchFinnhub("/stock/profile2", { symbol }), TTL_MS.PROFILE);
-      return sendJson(res, statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
+      return reply(statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
     }
 
     if (url.pathname === "/api/company/news") {
@@ -397,10 +424,10 @@ export function createMarketDataServer() {
       const key = cache.cacheKey("news", { symbol, from, to });
       const { statusCode, payload, cacheStatus, cachedAt, ttlSeconds } =
         await cache.getOrFetch(key, () => fetchFinnhub("/company-news", { symbol, from, to }), TTL_MS.NEWS);
-      return sendJson(res, statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
+      return reply(statusCode, withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds));
     }
 
-    return sendJson(res, 404, { ok: false, error: "Endpoint not found" });
+    return reply(404, { ok: false, error: "Endpoint not found" });
   });
 }
 
@@ -416,6 +443,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   // MARKET_DATA_HOST: set to 0.0.0.0 for public deployment; defaults to 127.0.0.1 for local safety.
   const port = Number(process.env.MARKET_DATA_PORT || process.env.PORT || 8787);
   const host = process.env.MARKET_DATA_HOST || "127.0.0.1";
+  if (process.env.NODE_ENV === "production" && !process.env.CORS_ORIGIN) {
+    console.warn("[proxy] WARNING: NODE_ENV=production but CORS_ORIGIN is not set. CORS will only allow local development origins. Set CORS_ORIGIN=<your-frontend-url> on the proxy host to allow your deployed frontend.");
+  }
   createMarketDataServer().listen(port, host, () => {
     console.log(`Market data proxy listening on http://${host}:${port}`);
   });
