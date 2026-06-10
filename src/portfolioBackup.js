@@ -13,6 +13,8 @@
      company news, API status, rate-limit state, cache state, and secrets.
    ============================================================ */
 
+import { SCHEMA_VERSION, isWellFormed } from "./portfolioStorage.js";
+
 export const BACKUP_VERSION = 1;
 
 /**
@@ -109,7 +111,7 @@ export function importBackup(raw, validTickers) {
 
   // filter saved portfolios — well-formedness check mirrored from portfolioStorage.js
   const rawSaved = Array.isArray(raw.savedPortfolios) ? raw.savedPortfolios : [];
-  const savedPortfolios = rawSaved.filter(_isSavedPortfolioWellFormed);
+  const savedPortfolios = rawSaved.filter(isWellFormed);
 
   return {
     ok: true,
@@ -131,20 +133,4 @@ export function makeBackupFilename() {
   return `portfolio-backup-${new Date().toISOString().slice(0, 10)}.json`;
 }
 
-// ── private helpers ──────────────────────────────────────────────────────────
-
-// Mirrored from portfolioStorage.js — must stay in sync with SCHEMA_VERSION = 1.
-const _STORAGE_SCHEMA_VERSION = 1;
-
-function _isSavedPortfolioWellFormed(entry) {
-  return (
-    entry !== null &&
-    typeof entry === "object" &&
-    entry.schemaVersion === _STORAGE_SCHEMA_VERSION &&
-    typeof entry.name === "string" &&
-    entry.name.length > 0 &&
-    Array.isArray(entry.holdings) &&
-    typeof entry.assumptions === "object" &&
-    entry.assumptions !== null
-  );
-}
+// SCHEMA_VERSION and isWellFormed are imported from portfolioStorage.js above.

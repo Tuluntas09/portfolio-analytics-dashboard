@@ -70,6 +70,13 @@ export function saveActiveState(holdings, assumptions, notes, storage = globalTh
   }
 }
 
+function migrateActiveState(parsed) {
+  if (!parsed || typeof parsed !== "object") return parsed;
+  const v = parsed.schemaVersion ?? 0;
+  if (v === ACTIVE_STATE_VERSION) return parsed;
+  return parsed; // placeholder for future migration steps
+}
+
 /**
  * Loads and validates the saved active state.
  * Returns { holdings, assumptions, notes, savedAt } or null on any error.
@@ -79,7 +86,7 @@ export function loadActiveState(storage = globalThis.localStorage) {
   try {
     const raw = storage.getItem(ACTIVE_STATE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
+    const parsed = migrateActiveState(JSON.parse(raw));
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
     if (parsed.schemaVersion !== ACTIVE_STATE_VERSION) return null;
     if (!Array.isArray(parsed.holdings)) return null;

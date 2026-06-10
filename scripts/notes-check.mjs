@@ -159,9 +159,10 @@ console.log("\napp.jsx — notes wiring");
 
 ok("portfolioNote state defined",
    appSrc.includes("portfolioNote") && appSrc.includes("setPortfolioNote"));
-ok("portfolioNote initialized to empty string",
-   appSrc.includes('useState("")') || appSrc.match(/portfolioNote[^=]*=\s*useState\(["']["']\)/) !== null
-   || appSrc.includes('useState("")'));
+ok("portfolioNote initialized (empty string or from loadActiveState notes)",
+   appSrc.includes('useState("")') ||
+   appSrc.match(/portfolioNote[^=]*=\s*useState\(["']["']\)/) !== null ||
+   (appSrc.includes("portfolioNote") && appSrc.includes("loadActiveState") && appSrc.includes("saved.notes")));
 ok("handleSavePortfolio passes portfolioNote to savePortfolio",
    appSrc.includes("savePortfolio(name, holdings, assumptions, portfolioNote)"));
 ok("handleLoadPortfolio restores portfolioNote",

@@ -58,8 +58,14 @@ function historyWindow(range, customFrom, customTo) {
 
 function App() {
   const dataAdapter = ACTIVE_DATA_ADAPTER;
-  const [theme, setTheme] = useState(() => localStorage.getItem("qpa-theme") || "dark");
-  const [language, setLanguage] = useState(() => localStorage.getItem("qpa-language") || "tr");
+  const [theme, setTheme] = useState(() => {
+    const raw = localStorage.getItem("qpa-theme");
+    return raw === "dark" || raw === "light" ? raw : "dark";
+  });
+  const [language, setLanguage] = useState(() => {
+    const raw = localStorage.getItem("qpa-language");
+    return raw === "en" || raw === "tr" ? raw : "tr";
+  });
   const [holdings, setHoldings] = useState(() => {
     const saved = loadActiveState();
     return saved ? saved.holdings : Object.entries(DEFAULT_LOTS).map(([t, lots]) => ({ t, lots }));

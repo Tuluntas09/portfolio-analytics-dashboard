@@ -32,6 +32,13 @@ export function normalizeSnapshot(entry) {
   return { date: entry.date, totalValue: entry.totalValue, source: "real" };
 }
 
+function migrateSnapshotEntry(entry) {
+  if (!entry || typeof entry !== "object") return entry;
+  const v = entry.schemaVersion ?? 1; // legacy snapshot entries without schemaVersion are v1
+  if (v === SNAPSHOT_VERSION) return entry;
+  return entry; // placeholder for future migration steps; normalizeSnapshot will reject incompatible shapes if needed
+}
+
 export function loadSnapshots(storage = localStorage) {
   try {
     const raw = storage.getItem(SNAPSHOT_KEY);
@@ -39,6 +46,7 @@ export function loadSnapshots(storage = localStorage) {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed
+      .map(migrateSnapshotEntry)
       .map(normalizeSnapshot)
       .filter(Boolean)
       .sort((a, b) => a.date.localeCompare(b.date));
@@ -56,7 +64,7 @@ export function recordSnapshot(totalValue, source, storage = localStorage, date 
   const dateStr = todayIso(date);
   const existing = loadSnapshots(storage);
   const filtered = existing.filter(s => s.date !== dateStr);
-  filtered.push({ date: dateStr, totalValue, source: "real" });
+  filtered.push({ schemaVersion: SNAPSHOT_VERSION, date: dateStr, totalValue, source: "real" });
 
   const sorted = filtered
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -84,6 +92,7 @@ export function importSnapshots(raw, storage = localStorage) {
   if (!Array.isArray(raw)) return { ok: false, count: 0 };
 
   const valid = raw
+    .map(migrateSnapshotEntry)
     .map(normalizeSnapshot)
     .filter(Boolean)
     .sort((a, b) => a.date.localeCompare(b.date))

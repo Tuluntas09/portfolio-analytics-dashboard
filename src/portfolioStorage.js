@@ -15,6 +15,13 @@ export const STORAGE_KEY = "qpa-portfolios";
 export const SCHEMA_VERSION = 1;
 export const MAX_SAVES = 10;
 
+function migratePortfolioEntry(entry) {
+  if (!entry || typeof entry !== "object") return entry;
+  const v = entry.schemaVersion ?? 0;
+  if (v === SCHEMA_VERSION) return entry;
+  return entry; // placeholder for future migration steps
+}
+
 // Returns the list of well-formed saves, or [] on any error.
 export function loadSaves(storage = globalThis.localStorage) {
   if (!storage) return [];
@@ -23,7 +30,7 @@ export function loadSaves(storage = globalThis.localStorage) {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isWellFormed);
+    return parsed.map(migratePortfolioEntry).filter(isWellFormed);
   } catch {
     return [];
   }
@@ -143,7 +150,7 @@ function sanitizeName(raw) {
 }
 
 // Returns true only if the entry has the required well-formed shape.
-function isWellFormed(entry) {
+export function isWellFormed(entry) {
   return (
     entry !== null &&
     typeof entry === "object" &&

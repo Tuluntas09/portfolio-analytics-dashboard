@@ -554,5 +554,54 @@ check("importSnapshots: round-trip preserves entries", () => {
   if (exported[1].totalValue !== 55000) fail("Second entry value mismatch");
 });
 
+// ── 13. Phase 11e — migration plumbing ───────────────────────────────────────
+
+check("T-SN1: recordSnapshot writes schemaVersion: 1 to raw stored JSON", () => {
+  const st = makeStorage();
+  const date = new Date("2026-06-10T12:00:00Z");
+  const result = recordSnapshot(80000, "real", st, date);
+  if (!result.ok) fail(`recordSnapshot failed: ${result.reason}`);
+  const rawArr = JSON.parse(st.getItem(SNAPSHOT_KEY));
+  if (!Array.isArray(rawArr) || rawArr.length === 0) fail("Raw JSON must be a non-empty array");
+  const entry = rawArr[rawArr.length - 1];
+  if (entry.schemaVersion !== 1) fail(`Expected schemaVersion 1, got ${entry.schemaVersion}`);
+});
+
+check("T-SN2: legacy snapshots without schemaVersion still load", () => {
+  const st = makeStorage();
+  const legacy = [
+    { date: "2026-06-01", totalValue: 100000, source: "real" },
+    { date: "2026-06-09", totalValue: 105000, source: "real" },
+  ];
+  st.setItem(SNAPSHOT_KEY, JSON.stringify(legacy));
+  const loaded = loadSnapshots(st);
+  if (loaded.length !== 2) fail(`Expected 2 legacy entries, got ${loaded.length}`);
+});
+
+check("T-SN3: current-version snapshot (schemaVersion:1) round-trips correctly", () => {
+  const st = makeStorage();
+  const versioned = [
+    { schemaVersion: 1, date: "2026-06-05", totalValue: 95000, source: "real" },
+  ];
+  st.setItem(SNAPSHOT_KEY, JSON.stringify(versioned));
+  const loaded = loadSnapshots(st);
+  if (loaded.length !== 1) fail(`Expected 1 entry, got ${loaded.length}`);
+  if (loaded[0].date !== "2026-06-05") fail("date mismatch on round-trip");
+  if (loaded[0].totalValue !== 95000) fail("totalValue mismatch on round-trip");
+});
+
+check("T-SN4: importSnapshots accepts legacy entries without schemaVersion", () => {
+  const st = makeStorage();
+  const legacy = [
+    { date: "2026-05-01", totalValue: 45000, source: "real" },
+    { date: "2026-06-01", totalValue: 55000, source: "real" },
+  ];
+  const result = importSnapshots(legacy, st);
+  if (!result.ok) fail(`importSnapshots failed: ${result.count}`);
+  if (result.count !== 2) fail(`Expected count 2, got ${result.count}`);
+  const loaded = loadSnapshots(st);
+  if (loaded.length !== 2) fail(`Expected 2 entries after import, got ${loaded.length}`);
+});
+
 // ── Final ─────────────────────────────────────────────────────────────────────
 console.log(`snapshot checks passed (${passed} tests)`);

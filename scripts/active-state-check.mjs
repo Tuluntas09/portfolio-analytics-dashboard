@@ -442,5 +442,30 @@ check("ui.js saveActiveState TR value is non-empty string", () => {
   if (!uiSrc.includes('"Geçerli Durumu Kaydet"')) fail('TR saveActiveState must be "Geçerli Durumu Kaydet"');
 });
 
+// ── 9. Phase 11e — migration plumbing ────────────────────────────────────────
+
+check("T-A1: valid current v1 active state still loads after migration step", () => {
+  const st = makeStorage();
+  const r = saveActiveState([{ t: "AAPL", lots: 10 }], DEFAULT_ASSUMPTIONS, "notes", st);
+  if (!r.ok) fail("saveActiveState should succeed");
+  const loaded = loadActiveState(st);
+  if (!loaded) fail("loadActiveState should return non-null after migration step");
+  if (!Array.isArray(loaded.holdings) || loaded.holdings.length !== 1) fail("holdings not preserved");
+  if (loaded.notes !== "notes") fail("notes not preserved");
+});
+
+check("T-A2: schemaVersion:99 active state returns null after migration step", () => {
+  const st = makeStorage();
+  st.setItem(ACTIVE_STATE_KEY, JSON.stringify({
+    schemaVersion: 99,
+    savedAt: new Date().toISOString(),
+    holdings: [{ t: "AAPL", lots: 10 }],
+    assumptions: DEFAULT_ASSUMPTIONS,
+    notes: "",
+  }));
+  const result = loadActiveState(st);
+  if (result !== null) fail("schemaVersion:99 should still return null");
+});
+
 // ── Final ─────────────────────────────────────────────────────────────────────
 console.log(`active-state checks passed (${passed} tests)`);

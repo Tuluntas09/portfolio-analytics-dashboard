@@ -225,5 +225,60 @@ const VALID_TICKERS = new Set(["AAPL", "MSFT", "NVDA", "VTI", "BND", "AMZN", "GO
   pass("QuotaExceededError is caught and returned as { ok: false, error: 'storage_error' }");
 }
 
+// ── 11. Phase 11e — migration plumbing ───────────────────────────────────────
+
+// T-S1: current v1 entry still loads normally after migration map
+{
+  const s = makeStorage();
+  const r = savePortfolio("MigrateTest", HOLDINGS_A, ASSUMPTIONS_A, "note", s);
+  if (!r.ok) fail(`savePortfolio failed: ${r.error}`);
+  const saves = loadSaves(s);
+  if (saves.length !== 1) fail(`Expected 1 save after migration map, got ${saves.length}`);
+  if (saves[0].name !== "MigrateTest") fail("Name mismatch after migration pass-through");
+  pass("T-S1: current v1 entry passes through migration map unchanged");
+}
+
+// T-S2: schemaVersion:0 entry is rejected safely after migration
+{
+  const s = makeStorage();
+  const v0entry = JSON.stringify([{
+    schemaVersion: 0,
+    name: "V0 Entry",
+    holdings: [{ t: "AAPL", lots: 10 }],
+    assumptions: ASSUMPTIONS_A,
+    savedAt: new Date().toISOString(),
+  }]);
+  s.setItem(STORAGE_KEY, v0entry);
+  const result = loadSaves(s);
+  if (result.length !== 0) fail(`schemaVersion:0 should be rejected, got ${result.length} entries`);
+  pass("T-S2: schemaVersion:0 entry rejected safely");
+}
+
+// T-S3: mixed array — only valid v1 entry loads, schemaVersion:99 filtered out
+{
+  const s = makeStorage();
+  const mixed = JSON.stringify([
+    {
+      schemaVersion: SCHEMA_VERSION,
+      name: "Valid V1",
+      holdings: [{ t: "AAPL", lots: 10 }],
+      assumptions: ASSUMPTIONS_A,
+      savedAt: new Date().toISOString(),
+    },
+    {
+      schemaVersion: 99,
+      name: "Future Format",
+      holdings: [{ t: "AAPL", lots: 5 }],
+      assumptions: ASSUMPTIONS_A,
+      savedAt: new Date().toISOString(),
+    },
+  ]);
+  s.setItem(STORAGE_KEY, mixed);
+  const result = loadSaves(s);
+  if (result.length !== 1) fail(`Expected 1 valid entry from mixed array, got ${result.length}`);
+  if (result[0].name !== "Valid V1") fail("Wrong entry retained from mixed array");
+  pass("T-S3: mixed array returns only valid v1 entry, schemaVersion:99 filtered");
+}
+
 // ── done ──────────────────────────────────────────────────────────────────────
 console.log(`\nportfolio-storage checks: ${passed} passed`);

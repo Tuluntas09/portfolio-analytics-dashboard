@@ -211,9 +211,10 @@ assert("exports BACKUP_VERSION", src.includes("export const BACKUP_VERSION"));
 assert("exports exportBackup", src.includes("export function exportBackup"));
 assert("exports importBackup", src.includes("export function importBackup"));
 assert("exports makeBackupFilename", src.includes("export function makeBackupFilename"));
-assert("no import statements (standalone)", !src.includes('\nimport '));
-assert("_isSavedPortfolioWellFormed defined inline", src.includes("_isSavedPortfolioWellFormed"));
-assert("_STORAGE_SCHEMA_VERSION = 1", src.includes("_STORAGE_SCHEMA_VERSION = 1"));
+assert("imports SCHEMA_VERSION and isWellFormed from portfolioStorage.js",
+  src.includes("SCHEMA_VERSION") && src.includes("isWellFormed") && src.includes("portfolioStorage.js"));
+assert("T-B1: _STORAGE_SCHEMA_VERSION removed (no private mirror)", !src.includes("_STORAGE_SCHEMA_VERSION"));
+assert("T-B2: _isSavedPortfolioWellFormed removed (no duplicate logic)", !src.includes("_isSavedPortfolioWellFormed"));
 assert("no FINNHUB", !src.includes("FINNHUB"));
 assert("no VITE_", !src.includes("VITE_"));
 

@@ -242,4 +242,14 @@ const src = fs.readFileSync(appPath, "utf8");
   }
 }
 
+// ── 26. Phase 11e — primitive localStorage allowlist coercion ─────────────────
+{
+  if (!src.includes('=== "dark"') || !src.includes('=== "light"')) {
+    fail('src/app.jsx must use explicit allowlist check for qpa-theme ("dark" and "light")');
+  }
+  if (!src.includes('=== "en"') || !src.includes('=== "tr"')) {
+    fail('src/app.jsx must use explicit allowlist check for qpa-language ("en" and "tr")');
+  }
+}
+
 console.log("app checks passed");

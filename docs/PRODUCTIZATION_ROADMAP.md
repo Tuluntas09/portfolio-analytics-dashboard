@@ -973,6 +973,65 @@ implemented, tested, and documented. The repository is tagged at `v2.0.0`.
 
 ---
 
+## Phase 11 — Hardening and Analytics Accuracy
+
+**Goal:** Close known accuracy gaps, infrastructure weaknesses, and schema fragility identified during Phases 8–10.
+
+### 11a — Documentation accuracy pass ✓ *Completed 2026-06-10*
+
+README, Playwright test comments, FINANCIAL_METRICS.md, and screenshot captions brought up-to-date with actual implemented behavior.
+
+### 11b — E2E test expansion ✓ *Completed 2026-06-10*
+
+`tests/e2e/sidebar-features.spec.js` added: 18 tests covering language toggle, CSV/JSON/Save/Print controls, date range presets, cost basis inputs, saved portfolios/notes, active state feedback, and snapshot history. Total Playwright count: 35 → 37 (after 11d).
+
+### 11c — True Sortino ratio ✓ *Completed 2026-06-10*
+
+Replaced `annVol * 0.72` approximation with `calcDownsideDev` (T=0, total-n denominator). `calcDownsideDev` exported from `src/data.js`. 5 new metrics-check assertions (tests 16–20). `pAdj` in `app.jsx` updated.
+
+### 11d — Benchmark selector ✓ *Completed 2026-06-10*
+
+User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`. `BENCHMARK_TICKERS` exported from `src/data.js`. `BENCH_EQUITY_SCALAR` / `BENCH_DAILY_INCOME` approximation constants removed. Benchmark state in `app.jsx`; selector inside Advanced Assumptions section in sidebar. `p.benchmark` returned from `buildPortfolio`. Dynamic chart series label. metrics-check test 21 added. E2E Group H added (37/37 total).
+
+### 11e — localStorage Schema Migration Framework ✓ *Completed 2026-06-10*
+
+**Motivation:** All four storage modules were at schemaVersion 1 with no migration path. A future schema bump would silently discard all stored user data. Phase 11e installs forward-compatible migration plumbing without changing any current behavior.
+
+**What was added:**
+
+- `src/portfolioStorage.js`: `migratePortfolioEntry(entry)` private helper added. `loadSaves` maps entries through it before `isWellFormed` filtering. `isWellFormed` exported (was private) so `portfolioBackup.js` can import it.
+
+- `src/activePortfolioState.js`: `migrateActiveState(parsed)` private helper added. `loadActiveState` calls it after JSON.parse, before the schemaVersion check.
+
+- `src/portfolioSnapshots.js`: `migrateSnapshotEntry(entry)` private helper added. `recordSnapshot` now writes `schemaVersion: SNAPSHOT_VERSION` to each stored entry (was never embedded before). `loadSnapshots` and `importSnapshots` map through `migrateSnapshotEntry` before `normalizeSnapshot`. Entries without `schemaVersion` treated as legacy v1.
+
+- `src/portfolioBackup.js`: `_STORAGE_SCHEMA_VERSION = 1` private mirror constant removed. `_isSavedPortfolioWellFormed` duplicate function removed. Replaced with imports `{ SCHEMA_VERSION, isWellFormed }` from `./portfolioStorage.js`. Eliminates the drift risk between the two modules.
+
+- `src/app.jsx`: `qpa-theme` and `qpa-language` reads replaced with explicit allowlist coercion (`=== "dark" || === "light"`, `=== "en" || === "tr"`). Invalid stored values now fall back to the documented default instead of propagating to React state.
+
+- `scripts/snapshot-check.mjs`: 4 new tests (T-SN1 through T-SN4): schemaVersion written to raw JSON; legacy entries load; versioned entry round-trips; importSnapshots accepts legacy entries.
+
+- `scripts/portfolio-storage-check.mjs`: 3 new tests (T-S1 through T-S3): pass-through for v1; v0 rejected; mixed array returns only v1.
+
+- `scripts/active-state-check.mjs`: 2 new tests (T-A1, T-A2): pass-through for v1; schemaVersion:99 returns null.
+
+- `scripts/backup-check.mjs`: 3 existing source-text assertions replaced: no-import check → import check; _isSavedPortfolioWellFormed check → T-B2 absence check; _STORAGE_SCHEMA_VERSION check → T-B1 absence check. Net count preserved at 60.
+
+- `scripts/app-check.mjs`: 2 new checks (check 26) verifying explicit allowlist coercion for qpa-theme and qpa-language.
+
+- `scripts/notes-check.mjs`: 1 stale assertion fixed (`portfolioNote initialized` — was checking a pre-Phase-10b pattern; updated to also accept the `loadActiveState().notes` initialization).
+
+- `docs/STORAGE_SCHEMA.md` (new): localStorage key map, version constants, migration framework contract, backward-compatibility policy, module ownership, primitive key coercion, test coverage table.
+
+**Version invariants:** All version constants remain at 1. No localStorage key names changed. No user-facing behavior changed. No financial formulas changed. No proxy changes. No new npm dependencies.
+
+**Test results:** 37/37 Playwright E2E pass. All 24+ Node.js check scripts pass. `npm run build` clean (305 kB / 92 kB gzip / 34 modules / 0 warnings).
+
+**Open targets remaining:**
+- Production proxy deployment (Render) — Phase 11f
+
+---
+
 ## Dependency Budget
 
 To remain suitable for GitHub portfolio display and easy setup, the project should
