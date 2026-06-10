@@ -8,27 +8,34 @@ const YAHOO_CHART_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart"
 const DEFAULT_TIMEOUT_MS = 10000;
 let localSecretsLoaded = false;
 
-// Resolve the CORS Allow-Origin value for a given request origin.
-// Precedence:
-//   1. CORS_ORIGIN env var — set this on all production proxy hosts
-//   2. Request origin, if it matches a known local development origin
-//   3. http://localhost:5173 as a safe local development fallback
-// "*" is intentionally never returned. Production hosts that forget to set
-// CORS_ORIGIN will receive a localhost origin rather than a wildcard — this
-// causes a visible browser CORS error instead of silent wide-open access.
+const LOCAL_ORIGINS = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:8502",
+  "http://127.0.0.1:8502",
+]);
+
+function normalizeOrigin(origin) {
+  return origin.trim().replace(/\/+$/, "");
+}
+
+function parseConfiguredOrigins() {
+  const raw = process.env.CORS_ORIGIN || "";
+  return raw.split(",").map(normalizeOrigin).filter(s => s.length > 0);
+}
+
+// Resolve the CORS Access-Control-Allow-Origin value for a given request origin.
+// Supports comma-separated CORS_ORIGIN, trims whitespace and trailing slashes.
+// "*" is intentionally never returned. An unrecognized or absent origin falls
+// back to the first configured origin (or localhost) rather than a wildcard,
+// so misconfiguration produces a visible browser CORS error, not open access.
 function resolveCorsOrigin(reqOrigin) {
-  const configured = process.env.CORS_ORIGIN;
-  if (configured) return configured;
+  const configured = parseConfiguredOrigins();
+  const normalizedReq = reqOrigin ? normalizeOrigin(reqOrigin) : null;
 
-  const localOrigins = new Set([
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8502",
-    "http://127.0.0.1:8502",
-  ]);
-
-  if (reqOrigin && localOrigins.has(reqOrigin)) return reqOrigin;
-  return "http://localhost:5173";
+  if (normalizedReq && LOCAL_ORIGINS.has(normalizedReq)) return normalizedReq;
+  if (normalizedReq && configured.includes(normalizedReq)) return normalizedReq;
+  return configured[0] || "http://localhost:5173";
 }
 
 function parseSecretValue(line, key) {
@@ -71,8 +78,9 @@ function sendJson(res, statusCode, payload, corsOrigin) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": corsOrigin !== undefined ? corsOrigin : resolveCorsOrigin(null),
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Vary": "Origin",
     "Cache-Control": "no-store",
   });
   res.end(JSON.stringify(payload));
@@ -432,6 +440,7 @@ export function createMarketDataServer() {
 }
 
 export {
+  resolveCorsOrigin,
   parseRetryAfter,
   normalizeFinnhubCandles,
   normalizeYahooCandles,
