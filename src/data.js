@@ -67,7 +67,14 @@ export function isValidTicker(str) {
 // VITE_API_BASE_URL: optional build-time variable pointing at a deployed proxy.
 // Falls back to localhost for local development (Mode B).
 // Never set VITE_FINNHUB_API_KEY — the key must stay server-side only.
-const _PROXY_BASE_URL = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8787";
+function viteApiBaseUrl() {
+  try {
+    return import.meta.env.VITE_API_BASE_URL;
+  } catch {
+    return "";
+  }
+}
+const _PROXY_BASE_URL = (viteApiBaseUrl() || "http://127.0.0.1:8787").replace(/\/+$/, "");
 
 export const DATA_SOURCES = {
   mock: {

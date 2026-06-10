@@ -156,6 +156,14 @@ if (jsBundleContent.includes("127.0.0.1:8787")) {
   fail("default proxy URL (127.0.0.1:8787) missing from JS bundle — VITE_API_BASE_URL fallback may be broken");
 }
 
+if (process.env.VITE_API_BASE_URL) {
+  if (jsBundleContent.includes(process.env.VITE_API_BASE_URL)) {
+    pass("VITE_API_BASE_URL value present in JS bundle");
+  } else {
+    fail("VITE_API_BASE_URL value missing from JS bundle — deployed proxy URL may not be wired into the frontend");
+  }
+}
+
 // ── 13–14. Bundle size ceilings ─────────────────────────────────────────────
 header("Bundle size ceilings");
 const jsBundlePath = path.join(assetsDir, jsFiles[0]);

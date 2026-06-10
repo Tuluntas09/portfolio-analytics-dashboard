@@ -13,6 +13,7 @@ const app = read("public/legacy/app.jsx");
 const sidebar = read("public/legacy/sidebar.jsx");
 const ui = read("public/legacy/ui.jsx");
 const views = read("public/legacy/views-analysis.jsx");
+const moduleData = read("src/data.js");
 
 // Phase 6i: index.html now uses the Vite module entry; legacy scripts removed.
 if (!index.includes('type="module"') || !index.includes("src/app.jsx")) {
@@ -55,6 +56,12 @@ if (!adapter) fail("ACTIVE_DATA_ADAPTER is not exported");
 if (adapter.source.id !== "mock") fail("Default adapter should be mock until real data is enabled");
 if (!DATA_SOURCES.real) fail("Real data source metadata is not registered");
 if (!DATA_SOURCES.real.baseUrl) fail("Real data source should define a proxy baseUrl");
+if (!moduleData.includes("import.meta.env.VITE_API_BASE_URL")) {
+  fail("src/data.js must read VITE_API_BASE_URL through direct Vite env access");
+}
+if (moduleData.includes("typeof import.meta.env")) {
+  fail("src/data.js must not guard VITE_API_BASE_URL with typeof import.meta.env; Vite can minify that guard to the localhost fallback");
+}
 if (!app.includes("/api/market/history")) fail("App should fetch real price history from the proxy");
 if (!app.includes("/api/market/quote")) fail("App should fetch real quote data from the proxy");
 if (!app.includes("/api/company/profile")) fail("App should fetch real company profile data from the proxy");
