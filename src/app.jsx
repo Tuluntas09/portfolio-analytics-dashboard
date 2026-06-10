@@ -780,6 +780,9 @@ function App() {
         /* ── Phase 12d: Table horizontal scroll ──────────────────────────── */
         .tbl-wrap { -webkit-overflow-scrolling: touch; }
         .tbl { min-width: 600px; }
+
+        /* ── Phase 12c: Chart responsive wrapper ─────────────────────────── */
+        .chart-responsive { width: 100%; max-width: 100%; overflow: hidden; }
       `}</style>
     </div>
   );

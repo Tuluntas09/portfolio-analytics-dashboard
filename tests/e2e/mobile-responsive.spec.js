@@ -176,6 +176,11 @@ test.describe("Mobile rendering smoke", () => {
     await expect(page.locator(".kpi-strip")).toBeVisible();
     // At least one SVG should be rendered by the growth chart.
     await expect(page.locator("svg").first()).toBeVisible();
+    // Phase 12c: the first visible chart SVG must not exceed the viewport width.
+    const box = await page.locator("svg").first().boundingBox();
+    if (box) {
+      expect(box.width).toBeLessThanOrEqual(375 + 2); // 2px tolerance for sub-pixel rounding
+    }
   });
 
   test("Risk tab renders at mobile width without crashing", async ({ page }) => {

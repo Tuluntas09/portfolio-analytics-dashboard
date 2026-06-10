@@ -34,7 +34,7 @@ import { VBars, MiniLine, FanChart, Histogram } from "../charts.jsx";
 import { STRESS, monteCarlo, COMPANY, lookup, DATA_SOURCES } from "../data.js";
 import { dataProviderLabel, dataProviderTone } from "./overview.jsx";
 
-const { useMemo: useMemoVA, useState: useStateVA, useEffect: useEffectVA } = React;
+const { useMemo: useMemoVA, useState: useStateVA, useEffect: useEffectVA, useRef: useRefVA, useLayoutEffect: useLayoutEffectVA } = React;
 
 const MODULE_COPY = {
   en: {
@@ -341,6 +341,28 @@ function moduleCopy(language) {
   return MODULE_COPY[language] || MODULE_COPY.tr;
 }
 
+function useContainerWidth(defaultWidth) {
+  const ref = useRefVA(null);
+  const [width, setWidth] = useStateVA(defaultWidth);
+  useLayoutEffectVA(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => {
+      const next = Math.floor(node.clientWidth || defaultWidth);
+      if (next > 0) setWidth(next);
+    };
+    update();
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(update);
+      ro.observe(node);
+      return () => ro.disconnect();
+    }
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [defaultWidth]);
+  return [ref, width];
+}
+
 function classOf(a) {
   if (["BND", "TLT"].includes(a.t)) return "bond";
   if (["GLD"].includes(a.t)) return "alt";
@@ -350,6 +372,8 @@ function classOf(a) {
 /* ---------------- ANALYSIS ---------------- */
 export function AnalysisTab({ p, language = "tr" }) {
   const copy = moduleCopy(language);
+  const [rollRetRef, rollRetWidth] = useContainerWidth(760);
+  const [rollSharpeRef, rollSharpeWidth] = useContainerWidth(760);
   const eqW = p.assets.filter(a => classOf(a) === "equity").reduce((s, a) => s + a.weight, 0);
   const bondW = p.assets.filter(a => classOf(a) === "bond").reduce((s, a) => s + a.weight, 0);
   const altW = p.assets.filter(a => classOf(a) === "alt").reduce((s, a) => s + a.weight, 0);
@@ -396,10 +420,14 @@ export function AnalysisTab({ p, language = "tr" }) {
 
       <div className="grid-2-eq">
         <Card title={copy.rollingReturnTitle} subtitle={copy.rollingReturnSub}>
-          <VBars data={p.rollRet.map((v, i) => ({ v }))} fmt={v => (v * 100).toFixed(0) + "%"} color="var(--accent)" />
+          <div className="chart-responsive" ref={rollRetRef}>
+            <VBars data={p.rollRet.map((v, i) => ({ v }))} fmt={v => (v * 100).toFixed(0) + "%"} color="var(--accent)" width={rollRetWidth} />
+          </div>
         </Card>
         <Card title={copy.rollingSharpeTitle} subtitle={copy.rollingSharpeSub}>
-          <MiniLine data={p.rollSharpe} color="var(--accent-2)" band={1} fmt={v => v.toFixed(1)} />
+          <div className="chart-responsive" ref={rollSharpeRef}>
+            <MiniLine data={p.rollSharpe} color="var(--accent-2)" band={1} fmt={v => v.toFixed(1)} width={rollSharpeWidth} />
+          </div>
         </Card>
       </div>
 
@@ -571,6 +599,8 @@ function BigStat({ label, value, hint, tone }) {
 /* ---------------- SIMULATION ---------------- */
 export function SimulationTab({ p, assumptions, language = "tr" }) {
   const copy = moduleCopy(language);
+  const [fanRef, fanWidth] = useContainerWidth(760);
+  const [histRef, histWidth] = useContainerWidth(760);
   const sim = useMemoVA(() => monteCarlo(p.annRet, p.annVol, p.totalValue, assumptions.horizon, assumptions.paths, 4242),
     [p.annRet, p.annVol, p.totalValue, assumptions.horizon, assumptions.paths]);
   const cagr = q => Math.pow(q / p.totalValue, 1 / assumptions.horizon) - 1;
@@ -606,12 +636,16 @@ export function SimulationTab({ p, assumptions, language = "tr" }) {
       </div>
 
       <Card title={copy.simPaths} subtitle={`${assumptions.paths.toLocaleString()} ${copy.simPathsSub} ${assumptions.horizon} ${copy.simPathsTail}`}>
-        <FanChart sim={sim} startValue={p.totalValue} years={assumptions.horizon} />
+        <div className="chart-responsive" ref={fanRef}>
+          <FanChart sim={sim} startValue={p.totalValue} years={assumptions.horizon} width={fanWidth} />
+        </div>
       </Card>
 
       <div className="grid-2-1">
         <Card title={copy.terminalDistribution} subtitle={copy.terminalDistributionSub}>
-          <Histogram values={sim.terminal} startValue={p.totalValue} />
+          <div className="chart-responsive" ref={histRef}>
+            <Histogram values={sim.terminal} startValue={p.totalValue} width={histWidth} />
+          </div>
         </Card>
         <Card title={copy.outcomeScenarios} subtitle={copy.outcomeSub}>
           <Table dense zebra={false} columns={[

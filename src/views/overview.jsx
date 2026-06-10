@@ -174,6 +174,28 @@ const RISK_COPY = {
   },
 };
 
+function useContainerWidth(defaultWidth) {
+  const ref = React.useRef(null);
+  const [width, setWidth] = React.useState(defaultWidth);
+  React.useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => {
+      const next = Math.floor(node.clientWidth || defaultWidth);
+      if (next > 0) setWidth(next);
+    };
+    update();
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(update);
+      ro.observe(node);
+      return () => ro.disconnect();
+    }
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [defaultWidth]);
+  return [ref, width];
+}
+
 export function dataProviderLabel(provider, language) {
   const p = (provider || "").toLowerCase();
   if (p === "finnhub quote" || p === "finnhub") return "Finnhub";
@@ -192,6 +214,8 @@ export function dataProviderTone(provider) {
 
 export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas = null }) {
   const copy = RISK_COPY[language] || RISK_COPY.tr;
+  const [growthRef, growthWidth] = useContainerWidth(760);
+  const [snapshotRef, snapshotWidth] = useContainerWidth(760);
   const allocation = p.assets.map((a, i) => ({
     label: a.t,
     value: a.weight,
@@ -249,24 +273,30 @@ export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas
               })}
             </div>
           )}
-          <MiniLine
-            data={snapshots.map(s => s.totalValue)}
-            height={120}
-            color="var(--accent)"
-            fmt={v => "$" + (v >= 1000 ? (v / 1000).toFixed(0) + "k" : v.toFixed(0))}
-          />
+          <div className="chart-responsive" ref={snapshotRef}>
+            <MiniLine
+              data={snapshots.map(s => s.totalValue)}
+              height={120}
+              color="var(--accent)"
+              fmt={v => "$" + (v >= 1000 ? (v / 1000).toFixed(0) + "k" : v.toFixed(0))}
+              width={snapshotWidth}
+            />
+          </div>
         </Card>
       )}
 
       <div className="grid-2-1">
         <Card title={copy.cumulativeReturn} subtitle={copy.cumulativeReturnSub}>
-          <GrowthChart
-            series={[
-              { name: copy.portfolio, data: p.cum, color: "var(--accent)", fill: true },
-              { name: p.benchmark || "VTI", data: p.benchCum, color: "var(--text-faint)", dash: "4 4" },
-            ]}
-            height={292}
-          />
+          <div className="chart-responsive" ref={growthRef}>
+            <GrowthChart
+              series={[
+                { name: copy.portfolio, data: p.cum, color: "var(--accent)", fill: true },
+                { name: p.benchmark || "VTI", data: p.benchCum, color: "var(--text-faint)", dash: "4 4" },
+              ]}
+              height={292}
+              width={growthWidth}
+            />
+          </div>
         </Card>
 
         <Card title={copy.portfolioAllocation} subtitle={copy.allocationSub}>
@@ -318,6 +348,7 @@ export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas
 
 export function RiskTab({ p, language = "tr" }) {
   const copy = RISK_COPY[language] || RISK_COPY.tr;
+  const [rollVolRef, rollVolWidth] = useContainerWidth(760);
   const riskRows = p.assets
     .map((a, i) => ({ label: a.t, value: a.riskContrib, color: assetColor(i) }))
     .sort((a, b) => b.value - a.value);
@@ -368,7 +399,9 @@ export function RiskTab({ p, language = "tr" }) {
 
       <div className="grid-2-1">
         <Card title={copy.rollingVolatility} subtitle={copy.rollingVolSub}>
-          <MiniLine data={p.rollVol} color="var(--neg)" fmt={v => fmtPct(v)} />
+          <div className="chart-responsive" ref={rollVolRef}>
+            <MiniLine data={p.rollVol} color="var(--neg)" fmt={v => fmtPct(v)} width={rollVolWidth} />
+          </div>
         </Card>
 
         <Card title={copy.concentrationSummary} subtitle={copy.concentrationSummarySub}>

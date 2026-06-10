@@ -1169,6 +1169,35 @@ User-selectable benchmark: VTI (default), SPY, QQQ, BND. SPY added to `UNIVERSE`
 
 **Test results:** `npm run test:overview` pass. `npm run test:analysis` pass. `npm run test:app` pass. `npm run build` clean (312 kB / 94 kB gzip / 34 modules / 0 warnings). 37/37 E2E pass. ✓
 
+### 12c — Chart viewport-aware sizing ✓ *Completed 2026-06-10*
+
+**Goal:** Ensure all chart containers can never force full-page horizontal overflow on narrow viewports, and establish a `useContainerWidth` hook infrastructure so charts receive a measured container width on every resize.
+
+**Key finding:** All SVG chart components in `src/charts.jsx` already use `viewBox` + `width="100%"` on their root `<svg>` element. They already scale proportionally to their container via SVG's built-in aspect-ratio mechanics. No chart internals needed modification.
+
+**What was added:**
+
+- **`src/app.jsx`** — CSS rule: `.chart-responsive { width: 100%; max-width: 100%; overflow: hidden; }` Added after Phase 12d rules.
+
+- **`src/views/overview.jsx`** — Local `useContainerWidth(defaultWidth)` hook added at module level (uses `React.useRef`, `React.useState`, `React.useLayoutEffect`; prefers `ResizeObserver`, falls back to `window.resize`). Hook calls and `.chart-responsive` wrappers applied to: `GrowthChart` (OverviewTab), snapshot `MiniLine` (OverviewTab), rolling-vol `MiniLine` (RiskTab). Width is passed as a prop to each chart for forward compatibility (charts ignore it; they already use `width="100%"` internally).
+
+- **`src/views/analysis.jsx`** — Same `useContainerWidth` hook added using the file's existing VA-alias convention (`useRefVA`, `useLayoutEffectVA`). Wrappers applied to: `VBars` (AnalysisTab), rolling-Sharpe `MiniLine` (AnalysisTab), `FanChart` (SimulationTab), `Histogram` (SimulationTab).
+
+- **`scripts/charts-check.mjs`** — Three Phase 12c assertions added (checks 11–13):
+  - No raw numeric literal as SVG `width` attribute (e.g. `width={760}` would be caught).
+  - `overview.jsx` must include `chart-responsive` class and `useContainerWidth`.
+  - `analysis.jsx` must include `chart-responsive` class and `useContainerWidth`.
+
+- **`tests/e2e/mobile-responsive.spec.js`** — "Overview tab renders mobile content" strengthened: asserts first visible SVG `boundingBox.width ≤ 375 + 2px` tolerance.
+
+**No chart math changed. No chart component internals changed. No financial formulas changed.**
+
+**Build:** 314 kB / 94 kB gzip / 34 modules / 0 warnings (ResizeObserver adds ~1.5 kB uncompressed).
+
+**Test results:** `npm run test:charts` pass. `npm run test:overview` pass. `npm run test:analysis` pass. `npm run test:app` pass. `npm run build` clean. 49/49 E2E pass. ✓
+
+---
+
 ### 12e — Mobile E2E spec ✓ *Completed 2026-06-10*
 
 **Goal:** Add browser-level regression coverage for the Phase 12a–12d mobile responsive behavior at a real 375×812 phone viewport, so future changes cannot silently break the mobile layout.

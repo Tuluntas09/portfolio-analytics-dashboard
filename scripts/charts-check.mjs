@@ -111,4 +111,42 @@ const chartsSrc = fs.readFileSync(path.join(root, "src", "charts.jsx"), "utf8");
   }
 }
 
+// ── Phase 12c: Responsive chart sizing ────────────────────────────────────
+
+// ── 11. SVG chart components must not use a raw pixel integer as the SVG width ──
+{
+  // All scale-to-container charts should use width="100%" (or a prop-driven value).
+  // A pattern like width={760} on an SVG element would be a hardcoded pixel width
+  // that ignores the container — catch any such regression.
+  if (/width=\{\d+\}/.test(chartsSrc)) {
+    fail('src/charts.jsx must not use a raw numeric literal as an SVG width attribute — use width="100%" for scalable charts');
+  }
+}
+
+// ── 12. Overview view uses chart-responsive wrapper ────────────────────────
+{
+  const overviewPath = path.join(root, "src", "views", "overview.jsx");
+  if (!fs.existsSync(overviewPath)) fail("src/views/overview.jsx must exist");
+  const overviewSrc = fs.readFileSync(overviewPath, "utf8");
+  if (!overviewSrc.includes("chart-responsive")) {
+    fail('src/views/overview.jsx must use className="chart-responsive" wrapper around chart call sites (Phase 12c)');
+  }
+  if (!overviewSrc.includes("useContainerWidth")) {
+    fail("src/views/overview.jsx must define useContainerWidth hook (Phase 12c)");
+  }
+}
+
+// ── 13. Analysis view uses chart-responsive wrapper ────────────────────────
+{
+  const analysisPath = path.join(root, "src", "views", "analysis.jsx");
+  if (!fs.existsSync(analysisPath)) fail("src/views/analysis.jsx must exist");
+  const analysisSrc = fs.readFileSync(analysisPath, "utf8");
+  if (!analysisSrc.includes("chart-responsive")) {
+    fail('src/views/analysis.jsx must use className="chart-responsive" wrapper around chart call sites (Phase 12c)');
+  }
+  if (!analysisSrc.includes("useContainerWidth")) {
+    fail("src/views/analysis.jsx must define useContainerWidth hook (Phase 12c)");
+  }
+}
+
 console.log("charts checks passed");
