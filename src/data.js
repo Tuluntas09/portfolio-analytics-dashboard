@@ -64,17 +64,19 @@ export function isValidTicker(str) {
   return /^[A-Z0-9.]{1,8}$/.test(str.trim());
 }
 
-// VITE_API_BASE_URL: optional build-time variable pointing at a deployed proxy.
-// Falls back to localhost for local development (Mode B).
+// VITE_API_BASE_URL: optional build-time variable pointing at an external proxy.
+// When unset, defaults to "" (relative paths) — works for both Vercel (same-origin
+// serverless functions) and local dev (Vite proxies /api/* to port 8787).
 // Never set VITE_FINNHUB_API_KEY — the key must stay server-side only.
 function viteApiBaseUrl() {
   try {
     return import.meta.env.VITE_API_BASE_URL;
   } catch {
-    return "";
+    return undefined;
   }
 }
-const _PROXY_BASE_URL = (viteApiBaseUrl() || "http://127.0.0.1:8787").replace(/\/+$/, "");
+const _raw = viteApiBaseUrl();
+const _PROXY_BASE_URL = typeof _raw === "string" ? _raw.replace(/\/+$/, "") : "";
 
 export const DATA_SOURCES = {
   mock: {

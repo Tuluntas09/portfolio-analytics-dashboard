@@ -350,10 +350,10 @@ function withCacheMeta(payload, cacheStatus, cachedAt, ttlSeconds) {
   };
 }
 
-export function createMarketDataServer() {
+export function createRequestHandler() {
   const cache = createCache();
 
-  return http.createServer(async (req, res) => {
+  return async function handler(req, res) {
     const reqOrigin = req.headers.origin || null;
     const corsOrigin = resolveCorsOrigin(reqOrigin);
     const reply = (statusCode, payload) => sendJson(res, statusCode, payload, corsOrigin);
@@ -436,7 +436,11 @@ export function createMarketDataServer() {
     }
 
     return reply(404, { ok: false, error: "Endpoint not found" });
-  });
+  };
+}
+
+export function createMarketDataServer() {
+  return http.createServer(createRequestHandler());
 }
 
 export {

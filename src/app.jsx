@@ -43,7 +43,8 @@ const PROFILE_LABELS = {
   en: { balanced: "Balanced", risk: "Risk-focused", return: "Return-focused" },
   tr: { balanced: "Dengeli", risk: "Risk odaklı", return: "Getiri odaklı" },
 };
-const API_BASE_URL = DATA_SOURCES.real && DATA_SOURCES.real.baseUrl ? DATA_SOURCES.real.baseUrl : "http://127.0.0.1:8787";
+const _baseUrl = DATA_SOURCES.real?.baseUrl;
+const API_BASE_URL = typeof _baseUrl === "string" ? _baseUrl : "http://127.0.0.1:8787";
 const API_HEALTH_URL = API_BASE_URL + "/api/health";
 function historyWindow(range, customFrom, customTo) {
   if (range === "Custom" && customFrom && customTo) {
@@ -198,7 +199,7 @@ function App() {
     });
 
     return () => controller.abort();
-  }, [holdings, dateRange, customFrom, customTo, apiStatus.ok]);
+  }, [holdings, dateRange, customFrom, customTo, apiStatus.ok, benchmark]);
 
   useEffect(() => {
     const symbols = holdings.map(h => h.t);
@@ -409,7 +410,7 @@ function App() {
 
   function handlePrintReport() {
     document.body.classList.add("export-mode");
-    addEventListener("afterprint", () => document.body.classList.remove("export-mode"), { once: true });
+    window.addEventListener("afterprint", () => document.body.classList.remove("export-mode"), { once: true });
     window.print();
   }
 

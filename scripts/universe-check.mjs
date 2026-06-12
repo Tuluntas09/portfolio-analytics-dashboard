@@ -35,7 +35,7 @@ ok("exported from data.js",                 dataSrc.includes("export const DEFAU
 ok("px is 100",                             DEFAULT_GBM.px  === 100);
 ok("mu is 0.10",                            DEFAULT_GBM.mu  === 0.10);
 ok("sig is 0.25",                           DEFAULT_GBM.sig === 0.25);
-ok("canonical UNIVERSE entries unchanged",  UNIVERSE.length === 15);
+ok("canonical UNIVERSE entries unchanged",  UNIVERSE.length === 16);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 2. isValidTicker

@@ -55,7 +55,7 @@ const adapter = createMarketDataAdapter("mock");
 if (!adapter) fail("ACTIVE_DATA_ADAPTER is not exported");
 if (adapter.source.id !== "mock") fail("Default adapter should be mock until real data is enabled");
 if (!DATA_SOURCES.real) fail("Real data source metadata is not registered");
-if (!DATA_SOURCES.real.baseUrl) fail("Real data source should define a proxy baseUrl");
+if (typeof DATA_SOURCES.real.baseUrl !== "string") fail("Real data source should define a proxy baseUrl string (may be empty for same-origin Vercel deployment)");
 if (!moduleData.includes("import.meta.env.VITE_API_BASE_URL")) {
   fail("src/data.js must read VITE_API_BASE_URL through direct Vite env access");
 }
