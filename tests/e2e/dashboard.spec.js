@@ -28,6 +28,17 @@ async function prepareLocalStorage(page) {
   await page.addInitScript(() => {
     localStorage.setItem("qpa-language", "en");
     localStorage.setItem("qpa-theme", "dark");
+    localStorage.setItem("qpa-active-state", JSON.stringify({
+      schemaVersion: 1,
+      savedAt: "2026-06-01T00:00:00.000Z",
+      holdings: [
+        { t: "AAPL", lots: 120 },
+        { t: "MSFT", lots: 60 },
+        { t: "VTI",  lots: 180 },
+      ],
+      assumptions: { rf: 0.043, horizon: 5, paths: 2000 },
+      notes: "",
+    }));
   });
 }
 

@@ -33,7 +33,7 @@ const src = fs.readFileSync(appPath, "utf8");
 
 // ── 3. Imports from src/data.js ────────────────────────────────────────────
 {
-  const required = ["DATA_SOURCES", "ACTIVE_DATA_ADAPTER", "DEFAULT_LOTS"];
+  const required = ["DATA_SOURCES", "ACTIVE_DATA_ADAPTER"];
   for (const name of required) {
     if (!src.includes(name)) fail(`src/app.jsx must import/use ${name} from ./data.js`);
   }

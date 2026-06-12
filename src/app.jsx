@@ -17,7 +17,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
-import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, DEFAULT_LOTS, UNIVERSE, isValidTicker, calcDownsideDev, BENCHMARK_TICKERS } from "./data.js";
+import { DATA_SOURCES, ACTIVE_DATA_ADAPTER, UNIVERSE, isValidTicker, calcDownsideDev, BENCHMARK_TICKERS } from "./data.js";
 import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY } from "./portfolioStorage.js";
 import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
 import { loadSnapshots, recordSnapshot, calcDeltas, exportSnapshots, importSnapshots } from "./portfolioSnapshots.js";
@@ -69,7 +69,7 @@ function App() {
   });
   const [holdings, setHoldings] = useState(() => {
     const saved = loadActiveState();
-    return saved ? saved.holdings : Object.entries(DEFAULT_LOTS).map(([t, lots]) => ({ t, lots }));
+    return saved ? saved.holdings : [];
   });
   const [dateRange, setDateRange] = useState("2Y");
   const [customFrom, setCustomFrom] = useState(getDefaultCustomFrom);
@@ -341,7 +341,7 @@ function App() {
     setSavedPortfolios(loadSaves());
   }
   function handleResetPortfolio() {
-    setHoldings(Object.entries(DEFAULT_LOTS).map(([tkr, lots]) => ({ t: tkr, lots })));
+    setHoldings([]);
     setAssumptions({ rf: 0.043, horizon: 5, paths: 2000 });
     setPortfolioNote("");
   }
