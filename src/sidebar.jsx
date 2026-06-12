@@ -22,7 +22,7 @@
 /* @jsxFrag React.Fragment */
 
 import React from "react";
-import { t, fmtUSD } from "./ui.js";
+import { t, fmtUSD, fmtUSDSigned, fmtPctSigned } from "./ui.js";
 import { UNIVERSE, lookup, isValidTicker, BENCHMARK_TICKERS } from "./data.js";
 import { validateDateRange } from "./dateUtils.js";
 
@@ -326,40 +326,71 @@ export function Sidebar(props) {
                 const u = lookupInstrument(h.t);
                 const a = assets.find(x => x.t === h.t);
                 const isExt = !lookup(h.t);
+                const px = a?.px ?? u?.px ?? 100;
+                const hasPnl = onCostBasis && h.avgCost != null && h.avgCost > 0 && a;
+                const pnl = hasPnl ? (px - h.avgCost) * h.lots : null;
+                const pct = hasPnl ? (px - h.avgCost) / h.avgCost : null;
                 return (
-                  <div key={h.t} className="lot-item">
-                    <div className="lot-row">
-                      <span className="num lot-tkr">{h.t}{isExt && <span className="ext-badge">EXT</span>}</span>
-                      <div className="lot-input">
-                        <input type="number" min="0" className="num" value={h.lots}
+                  <div key={h.t} className={"lot-card" + (isExt ? " lot-card--ext" : "")}>
+                    {/* header: ticker + full name + weight badge */}
+                    <div className="lot-card-head">
+                      <div className="lot-card-title">
+                        <span className="num lot-card-tkr">{h.t}{isExt && <span className="ext-badge">EXT</span>}</span>
+                        <span className="lot-card-name">{u?.name ?? t(language, "extendedUniverse")}</span>
+                      </div>
+                      {a && <span className="lot-wt-badge">{(a.weight * 100).toFixed(1)}%</span>}
+                    </div>
+
+                    {/* stats row: shares input | price | market value */}
+                    <div className="lot-card-body">
+                      <div className="lot-stat-col">
+                        <span className="lot-stat-lbl">{t(language, "lotsShares")}</span>
+                        <input type="number" min="0" className="num lot-shares-input" value={h.lots}
                           onChange={e => onLots(h.t, Math.max(0, parseInt(e.target.value || "0", 10)))} />
                       </div>
-                      <span className="num lot-px">@ ${(a?.px ?? u?.px ?? 100).toFixed(2)}</span>
-                      <span className="num lot-val">{a ? fmtUSD(a.value) : "—"}</span>
+                      <div className="lot-stat-col">
+                        <span className="lot-stat-lbl">{t(language, "lotsPrice")}</span>
+                        <span className="num lot-stat-px">${px.toFixed(2)}</span>
+                      </div>
+                      <div className="lot-stat-col lot-stat-col--right">
+                        <span className="lot-stat-lbl">{t(language, "lotsValue")}</span>
+                        <span className="num lot-stat-val">{a ? fmtUSD(a.value) : "—"}</span>
+                      </div>
                     </div>
+
+                    {/* cost basis + P&L */}
                     {onCostBasis && (
-                      <div className="lot-cost-row">
-                        <span className="lot-cost-lbl">{t(language, "averageCost")}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="num lot-cost-input"
-                          placeholder="—"
-                          value={h.avgCost != null ? h.avgCost : ""}
-                          onChange={e => {
-                            const v = parseFloat(e.target.value);
-                            onCostBasis(h.t, { avgCost: Number.isFinite(v) && v > 0 ? v : undefined });
-                          }}
-                        />
-                        <span className="lot-cost-lbl">{t(language, "firstBought")}</span>
-                        <input
-                          type="date"
-                          className="lot-date-input"
-                          value={h.firstBought || ""}
-                          max={new Date().toISOString().slice(0, 10)}
-                          onChange={e => onCostBasis(h.t, { firstBought: e.target.value || undefined })}
-                        />
+                      <div className="lot-card-cost">
+                        <div className="lot-cost-inputs">
+                          <div className="lot-cost-col">
+                            <span className="lot-stat-lbl">{t(language, "averageCost")}</span>
+                            <input
+                              type="number" min="0" step="0.01" className="num lot-cost-input"
+                              placeholder="—"
+                              value={h.avgCost != null ? h.avgCost : ""}
+                              onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                onCostBasis(h.t, { avgCost: Number.isFinite(v) && v > 0 ? v : undefined });
+                              }}
+                            />
+                          </div>
+                          <div className="lot-cost-col">
+                            <span className="lot-stat-lbl">{t(language, "firstBought")}</span>
+                            <input
+                              type="date" className="lot-date-input"
+                              value={h.firstBought || ""}
+                              max={new Date().toISOString().slice(0, 10)}
+                              onChange={e => onCostBasis(h.t, { firstBought: e.target.value || undefined })}
+                            />
+                          </div>
+                        </div>
+                        {hasPnl && (
+                          <div className={"lot-pnl-row " + (pnl >= 0 ? "lot-pnl--pos" : "lot-pnl--neg")}>
+                            <span className="lot-pnl-lbl">{t(language, "unrealizedPnl")}</span>
+                            <span className="num">{fmtUSDSigned(pnl)}</span>
+                            <span className="num lot-pnl-pct">({fmtPctSigned(pct)})</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -711,30 +742,65 @@ export function Sidebar(props) {
         .hold-del { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; color: var(--text-faint); }
         .hold-del:hover { background: var(--neg-soft); color: var(--neg); }
 
-        /* lots */
-        .lots { display: flex; flex-direction: column; gap: 5px; margin-top: 9px; }
-        .lot-row { display: grid; grid-template-columns: 42px 1fr auto auto; align-items: center; gap: 8px; }
-        .lot-tkr { font-size: 12px; font-weight: 600; color: var(--text-dim); }
-        .lot-input input { width: 100%; height: 30px; padding: 0 8px; border-radius: 6px; text-align: right;
-          border: 1px solid var(--border); background: var(--panel); font-size: 12.5px; outline: none; -moz-appearance: textfield; }
-        .lot-input input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-        .lot-input input::-webkit-outer-spin-button, .lot-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .lot-px { font-size: 10px; color: var(--text-faint); white-space: nowrap; }
-        .lot-val { font-size: 11px; color: var(--text-dim); min-width: 56px; text-align: right; }
+        /* lots — card layout */
+        .lots { display: flex; flex-direction: column; gap: 8px; margin-top: 9px; }
+        .lot-card { border: 1px solid var(--border); border-radius: 9px; overflow: hidden;
+          background: var(--panel); }
+        .lot-card--ext { border-color: color-mix(in oklch, var(--warn), transparent 60%);
+          background: color-mix(in oklch, var(--warn), transparent 94%); }
+
+        /* card header */
+        .lot-card-head { display: flex; align-items: center; justify-content: space-between;
+          padding: 8px 10px 6px; border-bottom: 1px solid var(--border-soft); gap: 6px; }
+        .lot-card-title { min-width: 0; flex: 1; }
+        .lot-card-tkr { font-size: 12.5px; font-weight: 700; color: var(--text); display: block; line-height: 1.2; }
+        .lot-card-name { display: block; font-size: 10px; color: var(--text-faint); white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+        .lot-wt-badge { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--accent);
+          background: var(--accent-soft); border: 1px solid color-mix(in oklch, var(--accent), transparent 60%);
+          border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+
+        /* stats row */
+        .lot-card-body { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+          padding: 8px 10px; }
+        .lot-stat-col { display: flex; flex-direction: column; gap: 3px; }
+        .lot-stat-col--right { align-items: flex-end; }
+        .lot-stat-lbl { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+          color: var(--text-faint); }
+        .lot-shares-input { width: 100%; height: 28px; padding: 0 6px; border-radius: 6px; text-align: right;
+          border: 1px solid var(--border); background: var(--bg-2); font-size: 12.5px; font-weight: 600;
+          color: var(--text); outline: none; -moz-appearance: textfield; max-width: 68px; }
+        .lot-shares-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+        .lot-shares-input::-webkit-outer-spin-button, .lot-shares-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .lot-stat-px { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+        .lot-stat-val { font-size: 12.5px; color: var(--text); font-weight: 700; }
+
+        /* cost basis */
+        .lot-card-cost { border-top: 1px solid var(--border-soft); padding: 7px 10px; }
+        .lot-cost-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .lot-cost-col { display: flex; flex-direction: column; gap: 3px; }
+        .lot-cost-input { width: 100%; height: 26px; padding: 0 6px; border-radius: 5px; text-align: right;
+          border: 1px solid var(--border); background: var(--bg-2); font-size: 11.5px; outline: none; color: var(--text);
+          -moz-appearance: textfield; }
+        .lot-cost-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+        .lot-cost-input::-webkit-outer-spin-button, .lot-cost-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .lot-date-input { height: 26px; width: 100%; padding: 0 4px; border-radius: 5px; font-size: 11px;
+          color: var(--text); background: var(--bg-2); border: 1px solid var(--border); outline: none; cursor: pointer; }
+        .lot-date-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+        /* P&L row */
+        .lot-pnl-row { display: flex; align-items: center; gap: 6px; margin-top: 6px;
+          padding: 4px 7px; border-radius: 5px; font-size: 11px; }
+        .lot-pnl-lbl { font-size: 9.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+          color: inherit; opacity: .75; flex: 1; }
+        .lot-pnl-pct { opacity: .8; }
+        .lot-pnl--pos { color: var(--pos); background: color-mix(in oklch, var(--pos), transparent 88%); }
+        .lot-pnl--neg { color: var(--neg); background: color-mix(in oklch, var(--neg), transparent 88%); }
+
+        /* total row */
         .lot-total { display: flex; justify-content: space-between; align-items: center; margin-top: 11px;
           padding-top: 10px; border-top: 1px dashed var(--border); font-size: 11.5px; color: var(--text-faint); }
         .lot-total .num { font-size: 14px; font-weight: 700; color: var(--text); }
-        .lot-item { display: flex; flex-direction: column; gap: 3px; }
-        .lot-cost-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 5px; padding: 0 2px; }
-        .lot-cost-lbl { font-size: 9.5px; color: var(--text-faint); white-space: nowrap; letter-spacing: .02em; }
-        .lot-cost-input { width: 100%; height: 26px; padding: 0 6px; border-radius: 5px; text-align: right;
-          border: 1px solid var(--border); background: var(--panel); font-size: 11.5px; outline: none; color: var(--text);
-          -moz-appearance: textfield; }
-        .lot-cost-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-        .lot-cost-input::-webkit-outer-spin-button, .lot-cost-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .lot-date-input { height: 26px; padding: 0 4px; border-radius: 5px; font-size: 11px; color: var(--text);
-          background: var(--panel); border: 1px solid var(--border); outline: none; cursor: pointer; }
-        .lot-date-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
         /* date presets */
         .seg-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
