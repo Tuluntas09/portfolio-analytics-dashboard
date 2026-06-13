@@ -37,7 +37,8 @@
     "test:snapshots": "node scripts/snapshot-check.mjs",
     "test:activestate": "node scripts/active-state-check.mjs",
     "test:exposure": "node scripts/exposure-check.mjs",
-    "test:transparency": "node scripts/data-transparency-check.mjs"
+    "test:transparency": "node scripts/data-transparency-check.mjs",
+    "test:report": "node scripts/report-print-check.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

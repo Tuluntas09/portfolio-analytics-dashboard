@@ -59,6 +59,7 @@ jobs:
           npm run test:activestate
           npm run test:exposure
           npm run test:transparency
+          npm run test:report
 
       - name: Playwright E2E tests
         run: npm run test:e2e

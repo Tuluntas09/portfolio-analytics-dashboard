@@ -29,6 +29,8 @@ import { Pill } from "./ui.jsx";
 import { Sidebar } from "./sidebar.jsx";
 import { OverviewTab, RiskTab } from "./views/overview.jsx";
 import { AnalysisTab, OptimizationTab, SimulationTab, CompanyTab, DataTab } from "./views/analysis.jsx";
+import { ReportDocument } from "./report.jsx";
+import { proxyState } from "./dataStatus.js";
 
 const TABS = [
   { id: "overview", en: "Overview", tr: "Özet" },
@@ -288,6 +290,9 @@ function App() {
     ? (language === "tr" ? "Canlı veri" : "Real data")
     : (language === "tr" ? "Model veri (çevrimdışı)" : "Model data (offline)");
 
+  const reportPeriod = dateRange === "Custom" ? `${customFrom} → ${customTo}` : dateRange;
+  const reportProxyConnected = proxyState(apiStatus) === "connected";
+
   useEffect(() => {
     if (pAdj.source?.id !== "real") return;
     if (marketDataStatus.status !== "ready") return;
@@ -511,28 +516,17 @@ function App() {
           </div>
         </header>
 
-        {/* print-only report header — hidden on screen, visible in @media print */}
-        <div className="print-header">
-          <div className="ph-brand">QPA</div>
-          <div className="ph-title">{t(language, "printHeaderTitle")}</div>
-          <div className="ph-meta">
-            <span>{t(language, "printHeaderGenerated")}: {printDate}</span>
-            <span className="ph-sep" />
-            <span>{pAdj.assets.length} {t(language, "holdings")} · {fmtUSD(pAdj.totalValue)}</span>
-            <span className="ph-sep" />
-            <span>{t(language, "printHeaderRange")}: {dateRange === "Custom" ? `${customFrom} → ${customTo}` : dateRange}</span>
-            <span className="ph-sep" />
-            <span>{t(language, "printHeaderBenchmark")}: {benchmark}</span>
-            <span className="ph-sep" />
-            <span>{t(language, "printHeaderSource")}: {printDataSourceLabel}</span>
-          </div>
-          {portfolioNote && (
-            <div className="ph-note">
-              <span className="ph-note-label">{t(language, "printHeaderNote")}:</span> {portfolioNote}
-            </div>
-          )}
-          <div className="ph-disclaimer">{t(language, "printHeaderDisclaimer")}</div>
-        </div>
+        {/* print-only report document — hidden on screen, visible in @media print */}
+        <ReportDocument
+          p={pAdj}
+          language={language}
+          benchmark={benchmark}
+          period={reportPeriod}
+          generated={printDate}
+          note={portfolioNote}
+          dataSourceLabel={printDataSourceLabel}
+          proxyConnected={reportProxyConnected}
+        />
 
         {/* tab nav */}
         <nav className="tabnav">
@@ -589,29 +583,80 @@ function App() {
           cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s; }
         .print-btn:hover { color: var(--text); border-color: var(--border); }
         body.export-mode .print-btn { display: none; }
-        .print-header { display: none; }
+        /* report document is print-only; hidden on screen */
+        .report-doc { display: none; }
         @media print {
+          /* hide the live dashboard chrome and content; print the report doc only */
           .sidebar { display: none !important; }
           .topbar { display: none !important; }
           .tabnav { display: none !important; }
           .rate-limit-banner { display: none !important; }
-          .print-header { display: block !important; margin-bottom: 18px; }
-          .ph-brand { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: #111; margin-bottom: 2px; }
-          .ph-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #111; }
-          .ph-meta { font-size: 11px; color: #444; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
-          .ph-sep { width: 3px; height: 3px; border-radius: 99px; background: #888; display: inline-block; }
-          .ph-note { font-size: 11px; color: #555; margin-bottom: 6px; }
-          .ph-note-label { font-weight: 600; }
-          .ph-disclaimer { font-size: 10px; color: #777; border-top: 1px solid #ccc; padding-top: 6px; margin-top: 6px; font-style: italic; }
+          .content { display: none !important; }
           .app { display: block; height: auto; overflow: visible; }
           .main { overflow: visible; }
-          .content { overflow: visible; padding: 12px; }
-          .card { page-break-inside: avoid; break-inside: avoid; }
-          .tbl thead th { position: static; }
-          .tbl-wrap { overflow: visible; }
-          .grid-2-1, .grid-1-2, .grid-2-eq, .opt-cards, .insight-grid { grid-template-columns: 1fr !important; }
-          .kpi-strip { grid-template-columns: repeat(3, 1fr) !important; }
-          @page { margin: 18mm 14mm; }
+          /* force a readable white page regardless of the active dark/light theme
+             (theme vars live on html[data-theme=...] and outrank the :root print
+             override, so reset the page backgrounds explicitly for paper) */
+          html, body, .app, .main { background: #ffffff !important; }
+          @page { margin: 16mm 14mm; }
+
+          .report-doc { display: block !important; color: #111; font-size: 11px; line-height: 1.5; }
+
+          /* branded header */
+          .rd-head { border-bottom: 1.5px solid #111; padding-bottom: 12px; margin-bottom: 14px; }
+          .rd-brand { font-size: 15px; font-weight: 800; letter-spacing: .14em; color: #111; }
+          .rd-brandsub { font-size: 10px; letter-spacing: .05em; color: #555; text-transform: uppercase; margin-top: 1px; }
+          .rd-title { font-size: 19px; font-weight: 700; color: #111; margin: 10px 0 6px; }
+          .rd-metaline { font-size: 11px; color: #444; }
+          .rd-nonadvisory { font-size: 10px; color: #666; font-style: italic; margin-top: 6px; }
+
+          /* metadata grid */
+          .rd-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin: 0 0 18px; }
+          .rd-meta-item { display: flex; gap: 6px; font-size: 11px; }
+          .rd-meta-item dt { color: #666; font-weight: 600; margin: 0; }
+          .rd-meta-item dd { color: #111; margin: 0; }
+          .rd-meta-wide { grid-column: 1 / -1; }
+
+          /* sections — avoid awkward breaks inside a section block */
+          .rd-section { margin-bottom: 18px; break-inside: avoid; page-break-inside: avoid; }
+          .rd-h2 { font-size: 13px; font-weight: 700; color: #111; border-bottom: 1px solid #ccc;
+            padding-bottom: 4px; margin: 0 0 10px; }
+          .rd-h2-num { color: #888; }
+
+          /* summary */
+          .rd-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
+          .rd-sum-item { border: 1px solid #ddd; border-radius: 4px; padding: 8px 10px; break-inside: avoid; }
+          .rd-sum-item dt { font-size: 9.5px; color: #666; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 3px; }
+          .rd-sum-item dd { font-size: 14px; font-weight: 700; color: #111; margin: 0; }
+
+          /* tables */
+          .rd-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+          .rd-table th { text-align: left; font-weight: 700; color: #333; border-bottom: 1.5px solid #999;
+            padding: 5px 6px; }
+          .rd-table td { padding: 5px 6px; border-bottom: 1px solid #e2e2e2; color: #222; }
+          .rd-table tr { break-inside: avoid; page-break-inside: avoid; }
+          .rd-right { text-align: right; }
+          .rd-metrics { max-width: 360px; }
+
+          /* exposure bars — grayscale, no overflow */
+          .rd-expo { margin-bottom: 12px; break-inside: avoid; }
+          .rd-expo-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+            color: #555; margin-bottom: 6px; }
+          .rd-expo-row { display: grid; grid-template-columns: 1fr 120px 44px; align-items: center; gap: 8px; margin-bottom: 4px; }
+          .rd-expo-label { font-size: 10px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .rd-expo-bar { height: 8px; background: #eaeaea; border-radius: 99px; overflow: hidden; }
+          .rd-expo-fill { display: block; height: 100%; background: #555; border-radius: 99px; max-width: 100%; }
+          .rd-expo-pct { font-size: 10px; text-align: right; color: #111; }
+
+          /* notes / methodology */
+          .rd-notes { font-size: 11px; color: #222; white-space: pre-wrap; word-break: break-word; margin: 0;
+            border-left: 3px solid #ccc; padding-left: 10px; }
+          .rd-method { font-size: 10px; color: #444; margin: 0 0 8px; }
+          .rd-disclaimer { font-size: 9.5px; color: #777; font-style: italic; border-top: 1px solid #ccc; padding-top: 6px; margin: 0; }
+
+          .rd-empty { font-size: 12px; color: #555; padding: 24px 0; text-align: center;
+            border: 1px dashed #ccc; border-radius: 6px; margin-bottom: 18px; }
+
           :root {
             --bg: #ffffff;
             --panel: #f9f9f9;

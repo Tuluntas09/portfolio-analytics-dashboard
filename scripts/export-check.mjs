@@ -87,26 +87,26 @@ const appCheckSrc = fs.readFileSync(path.join(root, "scripts", "app-check.mjs"),
   pass("legacy window.__exportTab and window.__exportDone preserved");
 }
 
-// ── 11. print-header element present in app.jsx JSX ────────────────────────
+// ── 11. report document rendered in app.jsx JSX (Phase C) ──────────────────
 {
-  if (!appSrc.includes('className="print-header"'))
-    fail('app.jsx must render a <div className="print-header"> element');
-  pass('print-header element present in app.jsx JSX');
+  if (!appSrc.includes('<ReportDocument'))
+    fail('app.jsx must render the <ReportDocument> print report element');
+  pass('ReportDocument element rendered in app.jsx JSX');
 }
 
-// ── 12. print-header hidden on screen ───────────────────────────────────────
+// ── 12. report document hidden on screen ───────────────────────────────────
 {
-  if (!appSrc.includes('.print-header { display: none'))
-    fail('app.jsx must set .print-header { display: none } in screen CSS');
-  pass('.print-header display:none in screen CSS');
+  if (!appSrc.includes('.report-doc { display: none'))
+    fail('app.jsx must set .report-doc { display: none } in screen CSS');
+  pass('.report-doc display:none in screen CSS');
 }
 
-// ── 13. print-header shown in @media print ──────────────────────────────────
+// ── 13. report document shown in @media print ──────────────────────────────
 {
   const printBlock = appSrc.slice(appSrc.indexOf('@media print'));
-  if (!printBlock.includes('.print-header'))
-    fail('@media print block must reference .print-header');
-  pass('.print-header visible in @media print');
+  if (!printBlock.includes('.report-doc { display: block'))
+    fail('@media print block must reveal .report-doc');
+  pass('.report-doc visible in @media print');
 }
 
 // ── 14. rate-limit-banner hidden in @media print ────────────────────────────
@@ -145,11 +145,12 @@ const appCheckSrc = fs.readFileSync(path.join(root, "scripts", "app-check.mjs"),
   pass('print-header references {benchmark}');
 }
 
-// ── 19. disclaimer i18n key used in print header ────────────────────────────
+// ── 19. disclaimer i18n key used in the report document ─────────────────────
 {
-  if (!appSrc.includes('printHeaderDisclaimer'))
-    fail('app.jsx print-header must use t(language, "printHeaderDisclaimer")');
-  pass('printHeaderDisclaimer key used in print-header');
+  const reportSrc = fs.readFileSync(path.join(root, "src", "report.jsx"), "utf8");
+  if (!reportSrc.includes('printHeaderDisclaimer'))
+    fail('report.jsx must use t(language, "printHeaderDisclaimer")');
+  pass('printHeaderDisclaimer key used in the report document');
 }
 
 // ── 20. printHeaderDisclaimer key in EN locale ──────────────────────────────
