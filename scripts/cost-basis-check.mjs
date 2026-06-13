@@ -246,10 +246,10 @@ ok("storage uses YYYY-MM-DD regex for firstBought", storageSrc.includes("\\d{4}-
 console.log("\nsrc/sidebar.jsx — source-text checks");
 
 ok("sidebar destructures onCostBasis prop",       sidebarSrc.includes("onCostBasis"));
-ok("sidebar has lot-cost-row CSS class",           sidebarSrc.includes("lot-cost-row"));
+ok("sidebar has lot-card-cost CSS class",          sidebarSrc.includes("lot-card-cost"));
 ok("sidebar has lot-cost-input CSS class",         sidebarSrc.includes("lot-cost-input"));
 ok("sidebar has lot-date-input CSS class",         sidebarSrc.includes("lot-date-input"));
-ok("sidebar has lot-item wrapper CSS class",       sidebarSrc.includes("lot-item"));
+ok("sidebar has lot-card wrapper CSS class",       sidebarSrc.includes("lot-card"));
 ok("sidebar calls onCostBasis on avgCost change",  sidebarSrc.includes("onCostBasis(h.t, { avgCost"));
 ok("sidebar calls onCostBasis on firstBought change", sidebarSrc.includes("firstBought"));
 ok("sidebar uses averageCost i18n key",            sidebarSrc.includes('"averageCost"'));
