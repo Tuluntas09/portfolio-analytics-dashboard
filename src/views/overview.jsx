@@ -28,6 +28,17 @@ import { assetColor, fmtUSD, fmtUSDSigned, fmtPct, fmtPctSigned, fmtNum, fmtUSDc
 import { Metric, Card, Pill, Table, Alert, ModuleIntro, InsightGrid, InsightCard } from "../ui.jsx";
 import { GrowthChart, Donut, Heatmap, HBars, MiniLine } from "../charts.jsx";
 import { corr, GLOSSARY } from "../data.js";
+import { computeExposure } from "../exposure.js";
+
+// category colors for exposure — blue / teal / neutral only (no green/red)
+const EXPO_COLORS = [
+  "var(--accent)", "var(--accent-2)",
+  "oklch(0.72 0.12 270)", "oklch(0.70 0.11 230)",
+  "oklch(0.76 0.09 200)", "oklch(0.68 0.08 255)",
+];
+function expoColor(key, i) {
+  return (key === "Unknown" || key === "Extended") ? "var(--text-faint)" : EXPO_COLORS[i % EXPO_COLORS.length];
+}
 
 const RISK_COPY = {
   en: {
@@ -45,6 +56,13 @@ const RISK_COPY = {
     portfolio: "Portfolio",
     portfolioAllocation: "Portfolio allocation",
     allocationSub: "Weights are calculated from lots x latest price.",
+    exposureTitle: "Exposure",
+    exposureSub: "Portfolio composition by sector and instrument class.",
+    sectorExposure: "Sector exposure",
+    assetClassExposure: "Asset class exposure",
+    exposureEmpty: "Add holdings to view sector and asset-class exposure.",
+    catUnknown: "Unknown",
+    catExtended: "Extended",
     holdingsDetail: "Holdings detail",
     holdingsDetailSub: "Position, performance and risk metrics at instrument level.",
     ticker: "Ticker",
@@ -116,6 +134,13 @@ const RISK_COPY = {
     portfolio: "Portföy",
     portfolioAllocation: "Portföy dağılımı",
     allocationSub: "Ağırlıklar lot x son fiyat üzerinden hesaplanır.",
+    exposureTitle: "Dağılım",
+    exposureSub: "Portföyün sektör ve araç sınıfı bazında bileşimi.",
+    sectorExposure: "Sektör dağılımı",
+    assetClassExposure: "Varlık sınıfı dağılımı",
+    exposureEmpty: "Sektör ve varlık sınıfı dağılımını görmek için varlık ekleyin.",
+    catUnknown: "Bilinmiyor",
+    catExtended: "Genişletilmiş",
     holdingsDetail: "Varlık detayı",
     holdingsDetailSub: "Pozisyon, performans ve risk metrikleri varlık bazında gösterilir.",
     ticker: "Sembol",
@@ -227,6 +252,36 @@ export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas
     color: assetColor(i),
   }));
 
+  const exposure = computeExposure(p.assets);
+  const catLabel = key => key === "Unknown" ? copy.catUnknown : key === "Extended" ? copy.catExtended : key;
+  const renderExposure = (rows, heading) => (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--text-faint)", marginBottom: 10 }}>{heading}</div>
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 12, color: "var(--text-faint)" }}>{copy.exposureEmpty}</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+          {rows.map((r, i) => {
+            const c = expoColor(r.key, i);
+            return (
+              <div key={r.key} style={{ display: "grid", gridTemplateColumns: "1fr 96px 48px", alignItems: "center", gap: 10 }}>
+                <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: 3, background: c, flexShrink: 0, alignSelf: "center" }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{catLabel(r.key)}</span>
+                  <span className="num" style={{ fontSize: 10.5, color: "var(--text-faint)", flexShrink: 0 }}>· {r.count} {copy.holdings}</span>
+                </span>
+                <div style={{ height: 9, background: "var(--panel-hi)", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{ width: (r.weight * 100) + "%", height: "100%", background: c, borderRadius: 99 }} />
+                </div>
+                <span className="num" style={{ fontSize: 12, textAlign: "right", color: "var(--text)" }}>{fmtPct(r.weight)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="tab-body fade-up">
       <div className="kpi-strip">
@@ -314,6 +369,17 @@ export function OverviewTab({ p, language = "tr", snapshots = [], snapshotDeltas
           </div>
         </Card>
       </div>
+
+      <Card title={copy.exposureTitle} subtitle={copy.exposureSub}>
+        {exposure.sector.length === 0 && exposure.assetClass.length === 0 ? (
+          <div style={{ fontSize: 12.5, color: "var(--text-faint)", padding: "4px 0" }}>{copy.exposureEmpty}</div>
+        ) : (
+          <div className="grid-2-eq" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
+            {renderExposure(exposure.sector, copy.sectorExposure)}
+            {renderExposure(exposure.assetClass, copy.assetClassExposure)}
+          </div>
+        )}
+      </Card>
 
       <Card title={copy.holdingsDetail} subtitle={copy.holdingsDetailSub} pad={false}>
         <Table columns={[
