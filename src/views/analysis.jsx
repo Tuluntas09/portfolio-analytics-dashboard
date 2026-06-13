@@ -33,6 +33,7 @@ import { ModuleIntro, Pill, InsightGrid, InsightCard, Card, Table, Alert, Metric
 import { VBars, MiniLine, FanChart, Histogram } from "../charts.jsx";
 import { STRESS, monteCarlo, COMPANY, lookup, DATA_SOURCES } from "../data.js";
 import { dataProviderLabel, dataProviderTone } from "./overview.jsx";
+import { summarizeDataStatus } from "../dataStatus.js";
 
 const { useMemo: useMemoVA, useState: useStateVA, useEffect: useEffectVA, useRef: useRefVA, useLayoutEffect: useLayoutEffectVA } = React;
 
@@ -157,6 +158,21 @@ const MODULE_COPY = {
     profileSource: "If profile fields are missing, the dashboard continues with static fallback data.",
     dataQ: "Which data is powering the dashboard, and is it healthy?",
     dataA: "Data is not an investment analysis screen; it is an audit panel for proxy, price history, quote/profile and raw series checks.",
+    dataStatusTitle: "Data source status",
+    dataStatusSub: "Plain-language summary of where current data comes from.",
+    marketProxyLabel: "Market data proxy",
+    dataSourceLabel: "Data source",
+    proxyConnected: "Connected",
+    proxyUnavailable: "Unavailable",
+    proxyKeyMissing: "Online · key missing",
+    proxyChecking: "Checking",
+    modeLive: "Live data",
+    modePartial: "Live data with fallback",
+    modeMock: "Mock / offline fallback data",
+    modePending: "Loading live data…",
+    providerUnavailableLine: "Live provider unavailable. QPA is using fallback data where available.",
+    rateLimitedLine: "Provider rate limit reached. Cached or fallback data may be shown.",
+    dataStatusReminder: "Analytics only — data may be delayed or unavailable. Not financial advice.",
     proxyHealth: "Proxy health",
     priceHistory: "Price history",
     quoteProfile: "Quote/profile",
@@ -306,6 +322,21 @@ const MODULE_COPY = {
     profileSource: "Profile alanları eksik gelirse dashboard statik fallback ile kırılmadan devam eder.",
     dataQ: "Dashboard hangi veriyle çalışıyor ve veri sağlıklı mı?",
     dataA: "Data sekmesi analitik karar ekranı değil; proxy, fiyat geçmişi, quote/profile ve ham seri denetimi için audit panelidir.",
+    dataStatusTitle: "Veri kaynağı durumu",
+    dataStatusSub: "Mevcut verinin nereden geldiğine dair sade bir özet.",
+    marketProxyLabel: "Piyasa verisi proxy'si",
+    dataSourceLabel: "Veri kaynağı",
+    proxyConnected: "Bağlı",
+    proxyUnavailable: "Erişilemiyor",
+    proxyKeyMissing: "Çevrimiçi · key eksik",
+    proxyChecking: "Kontrol ediliyor",
+    modeLive: "Canlı veri",
+    modePartial: "Canlı veri ve fallback",
+    modeMock: "Model / çevrimdışı fallback verisi",
+    modePending: "Canlı veri yükleniyor…",
+    providerUnavailableLine: "Canlı sağlayıcı erişilemiyor. QPA mümkün olduğunda fallback verisi kullanıyor.",
+    rateLimitedLine: "Sağlayıcı rate limit sınırına ulaşıldı. Önbellek veya fallback verisi gösterilebilir.",
+    dataStatusReminder: "Yalnızca analitik — veri gecikebilir veya erişilemeyebilir. Yatırım tavsiyesi değildir.",
     proxyHealth: "Proxy sağlığı",
     priceHistory: "Fiyat geçmişi",
     quoteProfile: "Quote/profil",
@@ -890,13 +921,14 @@ function companyDisplay(asset, fallback, real) {
 }
 
 /* ---------------- RAW DATA ---------------- */
-export function DataTab({ p, dateRange, apiStatus, marketDataStatus, referenceDataStatus, language = "tr" }) {
+export function DataTab({ p, dateRange, apiStatus, marketDataStatus, referenceDataStatus, rateLimitWarning = false, language = "tr" }) {
   const copy = moduleCopy(language);
   const [view, setView] = useStateVA("prices");
   const source = p.source || DATA_SOURCES.mock;
   const proxy = proxyHealthDisplay(apiStatus, language);
   const market = marketHistoryDisplay(marketDataStatus, language);
   const reference = referenceDataDisplay(referenceDataStatus, language);
+  const statusSummary = summarizeDataStatus({ apiStatus, marketDataStatus, source, rateLimitWarning });
   if (!p.assets.length) {
     return (
       <div className="tab-body fade-up">
@@ -904,6 +936,7 @@ export function DataTab({ p, dateRange, apiStatus, marketDataStatus, referenceDa
           question={copy.dataQ}
           answer={copy.dataA}
         />
+        <DataSourceStatus summary={statusSummary} copy={copy} />
         <InsightGrid>
           <InsightCard label={copy.proxyHealth} value={proxy.status} tone={proxy.status === "ready" ? "pos" : "warn"}>
             {proxy.value}
@@ -962,6 +995,8 @@ export function DataTab({ p, dateRange, apiStatus, marketDataStatus, referenceDa
         <Pill tone={source.id === "real" ? "pos" : "neutral"}>{source.id === "real" ? copy.realData : copy.mockFallback}</Pill>
       </ModuleIntro>
 
+      <DataSourceStatus summary={statusSummary} copy={copy} />
+
       <InsightGrid>
         <InsightCard label={copy.proxyHealth} value={proxy.status} tone={proxy.status === "ready" ? "pos" : "warn"}>
           {proxy.value}
@@ -1010,6 +1045,47 @@ export function DataTab({ p, dateRange, apiStatus, marketDataStatus, referenceDa
     </div>
   );
 }
+// Plain-language data-source status summary (descriptive only).
+function DataSourceStatus({ summary, copy }) {
+  const proxyText = summary.proxy === "connected" ? copy.proxyConnected
+    : summary.proxy === "unavailable" ? copy.proxyUnavailable
+      : summary.proxy === "key-missing" ? copy.proxyKeyMissing
+        : copy.proxyChecking;
+  const proxyTone = summary.proxy === "connected" ? "pos"
+    : summary.proxy === "unavailable" ? "neg" : "warn";
+  const modeText = summary.mode === "live" ? copy.modeLive
+    : summary.mode === "partial" ? copy.modePartial
+      : summary.mode === "pending" ? copy.modePending
+        : copy.modeMock;
+  const modeTone = summary.mode === "live" ? "pos"
+    : summary.mode === "partial" ? "warn" : "neutral";
+  const rowStyle = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 };
+  const lblStyle = { fontSize: 12, color: "var(--text-dim)" };
+  return (
+    <Card title={copy.dataStatusTitle} subtitle={copy.dataStatusSub}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={rowStyle}>
+          <span style={lblStyle}>{copy.marketProxyLabel}</span>
+          <Pill tone={proxyTone} size="sm">{proxyText}</Pill>
+        </div>
+        <div style={rowStyle}>
+          <span style={lblStyle}>{copy.dataSourceLabel}</span>
+          <Pill tone={modeTone} size="sm">{modeText}</Pill>
+        </div>
+        {summary.proxy === "unavailable" && (
+          <div style={{ fontSize: 11.5, color: "var(--text-faint)", lineHeight: 1.5 }}>{copy.providerUnavailableLine}</div>
+        )}
+        {summary.rateLimited && (
+          <div style={{ fontSize: 11.5, color: "var(--warn)", lineHeight: 1.5 }}>{copy.rateLimitedLine}</div>
+        )}
+        <div style={{ fontSize: 10.5, color: "var(--text-faint)", lineHeight: 1.5, borderTop: "1px solid var(--border-soft)", paddingTop: 8 }}>
+          {copy.dataStatusReminder}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function SrcItem({ label, value, status }) {
   const tone = status === "live" || status === "ready"
     ? "pos"

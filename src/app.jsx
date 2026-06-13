@@ -565,7 +565,7 @@ function App() {
               {tab === "optimization" && <OptimizationTab p={pAdj} language={language} />}
               {tab === "simulation" && <SimulationTab p={pAdj} assumptions={assumptions} language={language} />}
               {tab === "company" && <CompanyTab p={pAdj} referenceDataStatus={referenceDataStatus} apiStatus={apiStatus} language={language} />}
-              {tab === "data" && <DataTab p={pAdj} dateRange={dateRange} apiStatus={apiStatus} marketDataStatus={marketDataStatus} referenceDataStatus={referenceDataStatus} language={language} />}
+              {tab === "data" && <DataTab p={pAdj} dateRange={dateRange} apiStatus={apiStatus} marketDataStatus={marketDataStatus} referenceDataStatus={referenceDataStatus} rateLimitWarning={rateLimitWarning} language={language} />}
             </>
           )}
         </div>
