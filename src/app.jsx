@@ -635,7 +635,7 @@ function App() {
         .tab-btn.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
 
         .content { flex: 1; overflow-y: auto; padding: 22px 28px 40px; }
-        .tab-body { display: flex; flex-direction: column; gap: 18px; max-width: 1280px; }
+        .tab-body { display: flex; flex-direction: column; gap: 18px; max-width: 1680px; }
 
         .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
           background: var(--border-soft); border: 1px solid var(--border-soft); border-radius: var(--r-lg); overflow: hidden; }
