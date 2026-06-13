@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="QPA mark, readability variant">
+  <!-- Q: outer rounded frame (the ring) -->
+  <rect x="10" y="10" width="80" height="80" rx="22"/>
+  <!-- Q: tail breaking the lower-right corner -->
+  <line x1="70" y1="70" x2="92" y2="92"/>
+  <!-- P: upper internal area, full bowl + stem -->
+  <path d="M33 30 v28"/>
+  <path d="M33 30 h15 a9 9 0 0 1 0 18 h-15"/>
+  <!-- A: lower internal area, full apex + two legs + crossbar -->
+  <path d="M44 76 l10 -24 l10 24"/>
+  <path d="M48 66 h12"/>
+</svg>

@@ -215,12 +215,19 @@ export function Sidebar(props) {
       {/* brand / header */}
       <div className="sb-brand">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 26, height: 26, borderRadius: 7, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", display: "grid", placeItems: "center", flexShrink: 0 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round"><polyline points="3 17 9 11 13 15 21 6" /><polyline points="15 6 21 6 21 12" /></svg>
+          <div className="sb-brand-mark" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="12" y="12" width="76" height="76" rx="18" />
+              <line x1="68" y1="68" x2="88" y2="88" />
+              <path d="M40 30 v44" />
+              <path d="M40 30 h13 a8 8 0 0 1 0 16 h-13" />
+              <path d="M40 30 l18 44" />
+              <path d="M40 58 h15" />
+            </svg>
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", lineHeight: 1.1 }}>Quant Portfolio</div>
-            <div style={{ fontSize: 10, color: "var(--text-faint)", letterSpacing: ".04em" }}>ANALYTICS</div>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", lineHeight: 1.1 }}>QPA</div>
+            <div style={{ fontSize: 10, color: "var(--text-faint)", letterSpacing: ".02em" }}>Quant Portfolio Analytics</div>
           </div>
         </div>
         <div className="brand-actions">
@@ -692,6 +699,9 @@ export function Sidebar(props) {
           border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
         .sb-brand { display: flex; align-items: center; justify-content: space-between;
           padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .sb-brand-mark { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+          display: grid; place-items: center; color: var(--accent); background: var(--accent-soft);
+          border: 1px solid color-mix(in oklch, var(--accent), transparent 70%); }
         .brand-actions { display: flex; align-items: center; gap: 6px; }
         .lang-btn { min-width: 36px; height: 30px; padding: 0 9px; border-radius: 8px; display: grid; place-items: center;
           color: var(--text-dim); border: 1px solid var(--border-soft); background: var(--panel); font-size: 11px; font-weight: 700; }

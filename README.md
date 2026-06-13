@@ -1,8 +1,12 @@
 <div align="center">
 
-# Quant Portfolio Analytics Dashboard
+# QPA
 
-**Personal portfolio analytics and risk-monitoring dashboard**  
+**Quant Portfolio Analytics**
+
+Personal portfolio analytics and risk-monitoring dashboard.
+
+
 Vite React · Finnhub/Yahoo Finance proxy · Monte Carlo simulation · portfolio optimization scenarios · company news · data-quality transparency
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://portfolio-analytics-dashboard-three.vercel.app/)

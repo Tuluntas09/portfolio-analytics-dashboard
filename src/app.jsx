@@ -513,6 +513,7 @@ function App() {
 
         {/* print-only report header — hidden on screen, visible in @media print */}
         <div className="print-header">
+          <div className="ph-brand">QPA</div>
           <div className="ph-title">{t(language, "printHeaderTitle")}</div>
           <div className="ph-meta">
             <span>{t(language, "printHeaderGenerated")}: {printDate}</span>
@@ -595,6 +596,7 @@ function App() {
           .tabnav { display: none !important; }
           .rate-limit-banner { display: none !important; }
           .print-header { display: block !important; margin-bottom: 18px; }
+          .ph-brand { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: #111; margin-bottom: 2px; }
           .ph-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #111; }
           .ph-meta { font-size: 11px; color: #444; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
           .ph-sep { width: 3px; height: 3px; border-radius: 99px; background: #888; display: inline-block; }

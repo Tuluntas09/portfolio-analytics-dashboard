@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 620" font-family="'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <defs>
+    <symbol id="protoA" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="10" y="10" width="80" height="80" rx="22"/>
+        <line x1="70" y1="70" x2="92" y2="92"/>
+        <path d="M33 30 v28"/>
+        <path d="M33 30 h15 a9 9 0 0 1 0 18 h-15"/>
+        <path d="M44 76 l10 -24 l10 24"/>
+        <path d="M48 66 h12"/>
+      </g>
+    </symbol>
+    <symbol id="protoB" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="12" y="12" width="76" height="76" rx="18"/>
+        <line x1="68" y1="68" x2="88" y2="88"/>
+        <path d="M40 30 v44"/>
+        <path d="M40 30 h13 a8 8 0 0 1 0 16 h-13"/>
+        <path d="M40 30 l18 44"/>
+        <path d="M40 58 h15"/>
+      </g>
+    </symbol>
+    <symbol id="protoC" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="14" y="14" width="72" height="72" rx="20"/>
+        <line x1="66" y1="66" x2="86" y2="86"/>
+        <path d="M40 32 v36"/>
+        <path d="M40 32 h12 a7 7 0 0 1 0 14 h-12"/>
+        <path d="M40 50 l18 18"/>
+      </g>
+    </symbol>
+  </defs>
+
+  <!-- cool white background -->
+  <rect width="760" height="620" fill="#F4F7FA"/>
+
+  <!-- navy mark on light -->
+  <g color="#0B1B2B">
+    <text x="40" y="36" fill="#0B1B2B" font-size="16" font-weight="600">QPA Fused Frame — light preview</text>
+
+    <text x="40" y="74" fill="#5B6B7B" font-size="12">Prototype A</text>
+    <use href="#protoA" x="40"  y="84" width="16" height="16"/>
+    <use href="#protoA" x="72"  y="82" width="20" height="20"/>
+    <use href="#protoA" x="108" y="80" width="24" height="24"/>
+    <use href="#protoA" x="148" y="76" width="32" height="32"/>
+    <use href="#protoA" x="196" y="68" width="48" height="48"/>
+    <use href="#protoA" x="260" y="52" width="96" height="96"/>
+
+    <text x="40" y="184" fill="#5B6B7B" font-size="12">Prototype B</text>
+    <use href="#protoB" x="40"  y="194" width="16" height="16"/>
+    <use href="#protoB" x="72"  y="192" width="20" height="20"/>
+    <use href="#protoB" x="108" y="190" width="24" height="24"/>
+    <use href="#protoB" x="148" y="186" width="32" height="32"/>
+    <use href="#protoB" x="196" y="178" width="48" height="48"/>
+    <use href="#protoB" x="260" y="162" width="96" height="96"/>
+
+    <text x="40" y="294" fill="#5B6B7B" font-size="12">Prototype C</text>
+    <use href="#protoC" x="40"  y="304" width="16" height="16"/>
+    <use href="#protoC" x="72"  y="302" width="20" height="20"/>
+    <use href="#protoC" x="108" y="300" width="24" height="24"/>
+    <use href="#protoC" x="148" y="296" width="32" height="32"/>
+    <use href="#protoC" x="196" y="288" width="48" height="48"/>
+    <use href="#protoC" x="260" y="272" width="96" height="96"/>
+
+    <text x="40" y="404" fill="#5B6B7B" font-size="12">Lockups</text>
+
+    <use href="#protoB" x="40" y="416" width="40" height="40"/>
+    <text x="92" y="434" fill="#0B1B2B" font-size="22" font-weight="700" letter-spacing="1">QPA</text>
+    <text x="92" y="452" fill="#5B6B7B" font-size="11">Quant Portfolio Analytics</text>
+
+    <use href="#protoB" x="320" y="416" width="40" height="40"/>
+    <text x="372" y="444" fill="#0B1B2B" font-size="22" font-weight="700" letter-spacing="1">QPA</text>
+
+    <use href="#protoB" x="560" y="412" width="44" height="44"/>
+    <text x="560" y="486" fill="#0B1B2B" font-size="20" font-weight="700" letter-spacing="1">QPA</text>
+    <text x="560" y="504" fill="#5B6B7B" font-size="11">Quant Portfolio Analytics</text>
+  </g>
+</svg>

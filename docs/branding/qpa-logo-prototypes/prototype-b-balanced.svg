@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="QPA mark, balanced variant">
+  <!-- Q: outer frame, nearly square -->
+  <rect x="12" y="12" width="76" height="76" rx="18"/>
+  <!-- Q: tail -->
+  <line x1="68" y1="68" x2="88" y2="88"/>
+  <!-- Shared vertical stem: serves as both P's stem and A's left leg -->
+  <path d="M40 30 v44"/>
+  <!-- P: bowl off the shared stem (upper) -->
+  <path d="M40 30 h13 a8 8 0 0 1 0 16 h-13"/>
+  <!-- A: right leg from the shared apex + crossbar -->
+  <path d="M40 30 l18 44"/>
+  <path d="M40 58 h15"/>
+</svg>
