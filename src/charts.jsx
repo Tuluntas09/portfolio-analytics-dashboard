@@ -29,10 +29,12 @@ function pathFrom(pts) {
 }
 
 // ---------- AREA / LINE: cumulative growth vs benchmark ----------
-export function GrowthChart({ series, height = 250 }) {
+export function GrowthChart({ series, height = 250, width }) {
   // series: [{name, data:[], color, fill}]
+  // W tracks the measured container width so the drawing fills its card
+  // edge-to-edge instead of letterboxing inside a fixed 760-unit viewBox.
   const [hover, setHover] = useState(null);
-  const W = 760, H = height, padL = 46, padR = 14, padT = 14, padB = 24;
+  const W = width && width > 0 ? width : 760, H = height, padL = 46, padR = 14, padT = 14, padB = 24;
   const all = series.flatMap(s => s.data);
   let [lo, hi] = extent(all);
   lo = Math.min(lo, 1); hi = hi + (hi - lo) * 0.08;
@@ -192,8 +194,10 @@ export function VBars({ data, height = 150, color = "var(--accent)", baseline = 
 }
 
 // ---------- LINE (single, generic) for rolling vol/sharpe ----------
-export function MiniLine({ data, height = 150, color = "var(--accent-2)", fmt, band }) {
-  const W = 760, H = height, padB = 18, padT = 8, padL = 40, padR = 8;
+export function MiniLine({ data, height = 150, color = "var(--accent-2)", fmt, band, width }) {
+  // W tracks the measured container width so the line fills its card
+  // edge-to-edge instead of letterboxing inside a fixed 760-unit viewBox.
+  const W = width && width > 0 ? width : 760, H = height, padB = 18, padT = 8, padL = 40, padR = 8;
   let [lo, hi] = extent(data);
   const pad = (hi - lo) * 0.12 || 0.01; lo -= pad; hi += pad;
   const x = i => padL + (i / (data.length - 1)) * (W - padL - padR);
