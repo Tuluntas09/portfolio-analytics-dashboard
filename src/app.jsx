@@ -22,6 +22,7 @@ import { loadSaves, savePortfolio, deletePortfolio, validateEntry, STORAGE_KEY }
 import { exportBackup, importBackup, makeBackupFilename } from "./portfolioBackup.js";
 import { loadSnapshots, recordSnapshot, calcDeltas, exportSnapshots, importSnapshots } from "./portfolioSnapshots.js";
 import { saveActiveState, loadActiveState } from "./activePortfolioState.js";
+import { bootstrapPresentationPortfolio } from "./presentationPortfolio.js";
 import { parseHoldingsCsv, serializeHoldingsCsv } from "./holdingsCsv.js";
 import { getDefaultCustomFrom, calendarToTradingDays } from "./dateUtils.js";
 import { fmtUSD, fmtPctSigned, fmtNum, fmtPct, t } from "./ui.js";
@@ -835,6 +836,11 @@ function App() {
     </div>
   );
 }
+
+// First-launch only: seed a neutral demo portfolio when storage is empty.
+// No-op (and never overwrites) once the user has any saved or active state.
+// Runs before render so the useState initializers above read the seeded state.
+bootstrapPresentationPortfolio();
 
 createRoot(document.getElementById("root")).render(<App />);
 

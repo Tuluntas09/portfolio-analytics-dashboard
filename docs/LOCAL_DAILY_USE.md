@@ -188,6 +188,8 @@ Your holdings, position lots, cost basis, assumptions, and notes are **not** aut
 
 **When state is restored:** The next time the dashboard loads, it reads `qpa-active-state` and pre-fills all the above fields. If the key is missing or corrupt, defaults are used instead.
 
+**First launch:** On first launch (empty `localStorage`), QPA creates a neutral presentation starter portfolio for demo/onboarding; users can delete or replace it. It is seeded only when there are no saved portfolios and no active state, so it never overwrites existing data.
+
 **JSON import auto-saves:** Restoring a backup via *Import JSON* also saves the imported state immediately, so a page refresh after import does not lose the imported portfolio.
 
 **Reset to default:** Clicking *Reset to default* in the sidebar resets the in-memory state but does **not** delete `qpa-active-state`. The next page load will restore from the last explicit save — unless you click *Save Current State* again after resetting, which would overwrite the saved state with the default holdings.
